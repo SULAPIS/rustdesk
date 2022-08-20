@@ -193,6 +193,10 @@ impl UI {
         ipc::get_id()
     }
 
+    fn get_disk(&self) -> String {
+        ipc::get_disk()
+    }
+
     fn temporary_password(&mut self) -> String {
         self.5.lock().unwrap().clone()
     }
@@ -794,6 +798,7 @@ impl sciter::EventHandler for UI {
         fn is_xfce();
         fn using_public_server();
         fn get_id();
+        fn get_disk();
         fn temporary_password();
         fn update_temporary_password();
         fn permanent_password();

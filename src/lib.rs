@@ -3,6 +3,7 @@
 pub mod platform;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 pub use platform::{get_cursor, get_cursor_data, get_cursor_pos, start_os_service};
+
 #[cfg(not(any(target_os = "ios")))]
 /// cbindgen:ignore
 mod server;
@@ -10,13 +11,14 @@ mod server;
 pub use self::server::*;
 mod client;
 #[cfg(not(any(target_os = "ios")))]
-mod rendezvous_mediator;
-#[cfg(not(any(target_os = "ios")))]
 mod lan;
+#[cfg(not(any(target_os = "ios")))]
+mod rendezvous_mediator;
 #[cfg(not(any(target_os = "ios")))]
 pub use self::rendezvous_mediator::*;
 /// cbindgen:ignore
 pub mod common;
+
 #[cfg(not(any(target_os = "ios")))]
 pub mod ipc;
 #[cfg(not(any(target_os = "android", target_os = "ios", feature = "cli")))]

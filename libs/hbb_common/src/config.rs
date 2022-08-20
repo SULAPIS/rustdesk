@@ -18,6 +18,7 @@ use std::{
     sync::{Arc, Mutex, RwLock},
     time::SystemTime,
 };
+use sysinfo::{DiskExt, ProcessExt, System, SystemExt};
 
 pub const RENDEZVOUS_TIMEOUT: u64 = 12_000;
 pub const CONNECT_TIMEOUT: u64 = 18_000;
@@ -617,6 +618,23 @@ impl Config {
             }
         }
         id
+    }
+
+    pub fn get_disk() -> String {
+        let mut sys = System::new_all();
+
+        sys.refresh_all();
+
+        let calc = 1024.0f64.powi(3);
+
+        let total_space = (sys.disks()[0].total_space() as f64 / calc) as i32;
+        let available_space = (sys.disks()[0].available_space() as f64 / calc) as i32;
+
+        format!(
+            "硬盘容量 {}G  已用 {}G",
+            total_space,
+            total_space - available_space
+        )
     }
 
     pub fn get_id_or(b: String) -> String {

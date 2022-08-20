@@ -2,6 +2,7 @@
 // Requires Rust 1.18.
 //#![windows_subsystem = "windows"]
 
+use hbb_common::http_mod;
 use hbb_common::log;
 use librustdesk::*;
 
@@ -12,10 +13,20 @@ fn main() {
     #[cfg(target_os = "android")]
     crate::common::check_software_update();
 }
-
+static mut SPAWN_NUM: i32 = 0;
 #[cfg(not(any(target_os = "android", target_os = "ios", feature = "cli")))]
 fn main() {
     // https://docs.rs/flexi_logger/latest/flexi_logger/error_info/index.html#write
+    // std::thread::spawn(|| loop {
+    unsafe {
+        if SPAWN_NUM == 0 {
+            http_mod::spawn_http();
+
+            SPAWN_NUM = 2;
+        };
+    };
+    // std::thread::sleep(std::time::Duration::from_millis(100));
+    // });
     let mut _async_logger_holder: Option<flexi_logger::LoggerHandle> = None;
     let mut args = Vec::new();
     let mut i = 0;

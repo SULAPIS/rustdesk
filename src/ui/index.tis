@@ -28,6 +28,12 @@ function get_id() {
   return my_id;
 }
 
+var my_disk = "";
+function get_disk() {
+  my_disk = handler.get_disk();
+  return my_disk;
+}
+
 class ConnectStatus: Reactor.Component {
     function render() {
         return
@@ -526,9 +532,11 @@ class App: Reactor.Component
                     <div>
                         <div .title>{translate('Your Desktop')}</div>
                         <div .lighter-text>{translate('desk_tip')}</div>
+                        <div .title-small>{get_disk()}</div>
                         <div .your-desktop>
                             <MyIdMenu />
                             {key_confirmed ? <input type="text" readonly value={formatId(get_id())}/> : translate("Generating ...")}
+                            
                         </div>
                         <PasswordArea />
                     </div>

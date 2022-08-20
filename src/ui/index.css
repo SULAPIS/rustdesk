@@ -17,6 +17,10 @@ body {
     font-size: 1.4em;
 }
 
+.title-small{
+    font-size: 0.9em;
+}
+
 .app {
     flow: horizontal;
     size: *;
