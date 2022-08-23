@@ -591,6 +591,10 @@ pub fn get_disk() -> String {
     Config::get_disk()
 }
 
+pub fn close_window() {
+    Config::close_window()
+}
+
 pub async fn get_rendezvous_server(ms_timeout: u64) -> (String, Vec<String>) {
     if let Ok(Some(v)) = get_config_async("rendezvous_server", ms_timeout).await {
         let mut urls = v.split(",");

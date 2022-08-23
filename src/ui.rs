@@ -84,10 +84,23 @@ pub fn start(args: &mut [String]) {
     allow_err!(sciter::set_options(sciter::RuntimeOptions::ScriptFeatures(
         ALLOW_FILE_IO as u8 | ALLOW_SOCKET_IO as u8 | ALLOW_EVAL as u8 | ALLOW_SYSINFO as u8
     )));
-    let mut frame = sciter::WindowBuilder::main_window().create();
+    let mut frame = sciter::window::Window::create(
+        sciter::types::RECT {
+            left: 1000,
+            top: 500,
+            right: 300,
+            bottom: 300,
+        },
+        sciter::window::SCITER_CREATE_WINDOW_FLAGS::SW_ALPHA
+            | sciter::window::SCITER_CREATE_WINDOW_FLAGS::SW_MAIN
+            | sciter::window::SCITER_CREATE_WINDOW_FLAGS::SW_GLASSY,
+        None,
+    );
+    // let mut frame = sciter::WindowBuilder::main_window().create();
     #[cfg(windows)]
     allow_err!(sciter::set_options(sciter::RuntimeOptions::UxTheming(true)));
     frame.set_title(&crate::get_app_name());
+    // frame.collapse(true);
     #[cfg(target_os = "macos")]
     macos::make_menubar(frame.get_host(), args.is_empty());
     let page;
@@ -195,6 +208,10 @@ impl UI {
 
     fn get_disk(&self) -> String {
         ipc::get_disk()
+    }
+
+    fn close_window(&self) {
+        ipc::close_window()
     }
 
     fn temporary_password(&mut self) -> String {
@@ -799,6 +816,7 @@ impl sciter::EventHandler for UI {
         fn using_public_server();
         fn get_id();
         fn get_disk();
+        fn close_window();
         fn temporary_password();
         fn update_temporary_password();
         fn permanent_password();

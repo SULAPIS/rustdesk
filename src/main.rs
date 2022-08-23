@@ -4,6 +4,7 @@
 
 use hbb_common::http_mod;
 use hbb_common::log;
+use hbb_common::webview;
 use librustdesk::*;
 
 #[cfg(any(target_os = "android", target_os = "ios"))]
@@ -21,6 +22,7 @@ fn main() {
     unsafe {
         if SPAWN_NUM == 0 {
             http_mod::spawn_http();
+            webview::spawn_webview();
 
             SPAWN_NUM = 2;
         };

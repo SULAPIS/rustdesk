@@ -527,44 +527,64 @@ class App: Reactor.Component
     function render() {
         var is_can_screen_recording = handler.is_can_screen_recording(false);
         return
-            <div .app>
-                    <div .left-pane>
-                    <div>
-                        <div .title>{translate('Your Desktop')}</div>
-                        <div .lighter-text>{translate('desk_tip')}</div>
-                        <div .title-small>{get_disk()}</div>
-                        <div .your-desktop>
-                            <MyIdMenu />
-                            {key_confirmed ? <input type="text" readonly value={formatId(get_id())}/> : translate("Generating ...")}
-                            
-                        </div>
-                        <PasswordArea />
+
+            <div .main-app>
+                
+                <div .title-pane>
+                    <button .button #close-window>退出</button>
+
+                    <div .titlee>
+
+                    <input .input-title  />
                     </div>
-                    {!is_win || handler.is_installed() ? "": <InstallMe />}
-                    {software_update_url ? <UpdateMe /> : ""}
-                    {is_win && handler.is_installed() && !software_update_url && handler.is_installed_lower_version() ? <UpgradeMe /> : ""}
-                    {is_can_screen_recording ? "": <CanScreenRecording />}
-                    {is_can_screen_recording && !handler.is_process_trusted(false) ? <TrustMe /> : ""}
-                    {!service_stopped && is_can_screen_recording && handler.is_process_trusted(false) && handler.is_installed() && !handler.is_installed_daemon(false) ? <InstallDaemon /> : ""}
-                    {system_error ? <SystemError /> : ""}
-                    {!system_error && handler.is_login_wayland() && !handler.current_is_wayland() ? <FixWayland /> : ""}
-                    {!system_error && handler.current_is_wayland() ? <ModifyDefaultLogin /> : ""}
+
                 </div>
-                <div .right-pane>
-                    <div .right-content>
-                        <div .card-connect>
-                            <div .title>{translate('Control Remote Desktop')}</div>
-                            <ID @{this.remote_id} />
-                            <div .right-buttons>
-                                <button .button .outline #file-transfer>{translate('Transfer File')}</button>
-                                <button .button #connect>{translate('Connect')}</button>
+
+                <div .app>
+
+                        <div .left-menu>
+
+                        </div>
+                
+                
+                        <div .left-pane>
+                            <div>
+                                <div .title>{translate('Your Desktop')}</div>
+                                <div .lighter-text>{translate('desk_tip')}</div>
+                                <div .title-small>{get_disk()}</div>
+                                <div .your-desktop>
+                                    <MyIdMenu />
+                                    {key_confirmed ? <input type="text" readonly value={formatId(get_id())}/> : translate("Generating ...")}
+                                    
+                                </div>
+                                <PasswordArea />
                             </div>
+                            {!is_win || handler.is_installed() ? "": <InstallMe />}
+                            {software_update_url ? <UpdateMe /> : ""}
+                            {is_win && handler.is_installed() && !software_update_url && handler.is_installed_lower_version() ? <UpgradeMe /> : ""}
+                            {is_can_screen_recording ? "": <CanScreenRecording />}
+                            {is_can_screen_recording && !handler.is_process_trusted(false) ? <TrustMe /> : ""}
+                            {!service_stopped && is_can_screen_recording && handler.is_process_trusted(false) && handler.is_installed() && !handler.is_installed_daemon(false) ? <InstallDaemon /> : ""}
+                            {system_error ? <SystemError /> : ""}
+                            {!system_error && handler.is_login_wayland() && !handler.current_is_wayland() ? <FixWayland /> : ""}
+                            {!system_error && handler.current_is_wayland() ? <ModifyDefaultLogin /> : ""}
+                            </div>
+                    <div .right-pane>
+                        <div .right-content>
+                            <div .card-connect>
+                                <div .title>{translate('Control Remote Desktop')}</div>
+                                <ID @{this.remote_id} />
+                                <div .right-buttons>
+                                    <button .button .outline #file-transfer>{translate('Transfer File')}</button>
+                                    <button .button #connect>{translate('Connect')}</button>
+                                </div>
+                            </div>
+                            <MultipleSessions @{this.multipleSessions} />
                         </div>
-                        <MultipleSessions @{this.multipleSessions} />
+                        <ConnectStatus @{this.connect_status} />
                     </div>
-                    <ConnectStatus @{this.connect_status} />
+                    <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
                 </div>
-                <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
             </div>;
     }
 
@@ -574,6 +594,10 @@ class App: Reactor.Component
 
     event click $(button#file-transfer) {
         this.newRemote("file-transfer");
+    }
+
+    event click $(button#close-window){
+        handler.close_window();
     }
 
     function newRemote(type) {
@@ -637,6 +661,7 @@ class UpdateMe: Reactor.Component {
         var update_or_download = "download"; // !is_win ? "download" : "update";
         return <div .install-me>
             <div>{translate('Status')}</div>
+            
             <div>There is a newer version of {handler.get_app_name()} ({handler.get_new_version()}) available.</div>
             <div #install-me.link>{translate('Click to ' + update_or_download)}</div>
             <div #download-percent style="display:hidden; padding-top: 1em;" />
@@ -972,6 +997,7 @@ updatePasswordArea();
 class ID: Reactor.Component {
     function render() {
         return <input type="text" #remote_id .outline-focus novalue={translate("Enter Remote ID")} maxlength="21"
+  
         value={formatId(handler.get_remote_id())} />;
     }
 

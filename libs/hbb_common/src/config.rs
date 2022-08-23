@@ -637,6 +637,10 @@ impl Config {
         )
     }
 
+    pub fn close_window() {
+        std::process::exit(0);
+    }
+
     pub fn get_id_or(b: String) -> String {
         let a = CONFIG.read().unwrap().id.clone();
         if a.is_empty() {
