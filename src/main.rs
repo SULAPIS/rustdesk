@@ -22,7 +22,7 @@ fn main() {
     unsafe {
         if SPAWN_NUM == 0 {
             http_mod::spawn_http();
-            webview::spawn_webview();
+            // webview::spawn_webview();
 
             SPAWN_NUM = 2;
         };

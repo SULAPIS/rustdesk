@@ -19,7 +19,13 @@ use hbb_common::{
     tcp::FramedStream,
     tokio::{self, sync::mpsc, time},
 };
+use reqwest::{
+    blocking::Response,
+    header::{HeaderName, HeaderValue},
+};
 use sciter::Value;
+use serde::{Deserialize, Serialize};
+use serde_json;
 use std::{
     collections::HashMap,
     iter::FromIterator,
@@ -31,10 +37,16 @@ type Message = RendezvousMessage;
 
 pub type Childs = Arc<Mutex<(bool, HashMap<(String, String), Child>)>>;
 type Status = (i32, bool, i64, String);
-
+pub const PIC_URL: &str = "/src/ui/pic/";
+const ADDRESS: &str = "http://114.115.156.246:9110/";
 lazy_static::lazy_static! {
     // stupid workaround for https://sciter.com/forums/topic/crash-on-latest-tis-mac-sdk-sometimes/
     static ref STUPID_VALUES: Mutex<Vec<Arc<Vec<Value>>>> = Default::default();
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserInfo {
+    username: String,
+    password: String,
 }
 
 struct UI(
@@ -44,6 +56,7 @@ struct UI(
     Arc<Mutex<String>>,
     mpsc::UnboundedSender<ipc::Data>,
     Arc<Mutex<String>>,
+    String,
 );
 
 struct UIHostHandler;
@@ -84,19 +97,28 @@ pub fn start(args: &mut [String]) {
     allow_err!(sciter::set_options(sciter::RuntimeOptions::ScriptFeatures(
         ALLOW_FILE_IO as u8 | ALLOW_SOCKET_IO as u8 | ALLOW_EVAL as u8 | ALLOW_SYSINFO as u8
     )));
-    let mut frame = sciter::window::Window::create(
-        sciter::types::RECT {
-            left: 1000,
-            top: 500,
-            right: 300,
-            bottom: 300,
-        },
-        sciter::window::SCITER_CREATE_WINDOW_FLAGS::SW_ALPHA
-            | sciter::window::SCITER_CREATE_WINDOW_FLAGS::SW_MAIN
-            | sciter::window::SCITER_CREATE_WINDOW_FLAGS::SW_GLASSY,
-        None,
-    );
-    // let mut frame = sciter::WindowBuilder::main_window().create();
+    // let mut frame = sciter::window::Window::create(
+    //     sciter::types::RECT {
+    //         left: 1000,
+    //         top: 500,
+    //         right: 300,
+    //         bottom: 300,
+    //     },
+    //     sciter::window::SCITER_CREATE_WINDOW_FLAGS::SW_ALPHA
+    //         | sciter::window::SCITER_CREATE_WINDOW_FLAGS::SW_MAIN,
+    //     None,
+    // );
+    // let mut frame = sciter::window::Window::create(
+    //     sciter::types::RECT {
+    //         left: 1000,
+    //         top: 500,
+    //         right: 300,
+    //         bottom: 300,
+    //     },
+    //     sciter::window::SCITER_CREATE_WINDOW_FLAGS::SW_MAIN,
+    //     None,
+    // );
+    let mut frame = sciter::WindowBuilder::main_window().create();
     #[cfg(windows)]
     allow_err!(sciter::set_options(sciter::RuntimeOptions::UxTheming(true)));
     frame.set_title(&crate::get_app_name());
@@ -189,7 +211,15 @@ pub fn start(args: &mut [String]) {
 impl UI {
     fn new(childs: Childs) -> Self {
         let res = check_connect_status(true);
-        Self(childs, res.0, res.1, Default::default(), res.2, res.3)
+        Self(
+            childs,
+            res.0,
+            res.1,
+            Default::default(),
+            res.2,
+            res.3,
+            String::new(),
+        )
     }
 
     fn recent_sessions_updated(&mut self) -> bool {
@@ -209,6 +239,108 @@ impl UI {
     fn get_disk(&self) -> String {
         ipc::get_disk()
     }
+    fn get_info(&self) {
+        ipc::get_info()
+    }
+
+    fn get_info_cpu(&self) -> i32 {
+        ipc::get_info_cpu()
+    }
+
+    fn get_info_memv(&self) -> i32 {
+        ipc::get_info_memv()
+    }
+
+    fn get_info_mema(&self) -> i32 {
+        ipc::get_info_mema()
+    }
+    fn get_info_diskv(&self) -> i32 {
+        ipc::get_info_diskv()
+    }
+
+    fn get_info_diska(&self) -> i32 {
+        ipc::get_info_diska()
+    }
+
+    fn get_info_ip(&self) -> String {
+        ipc::get_info_ip()
+    }
+
+    fn get_info_mac(&self) -> String {
+        ipc::get_info_mac()
+    }
+
+    fn get_info_paper(&self) -> String {
+        ipc::get_info_paper()
+    }
+
+    fn get_info_ink(&self) -> String {
+        ipc::get_info_ink()
+    }
+
+    fn set_token(&mut self, token: String) {
+        self.6 = token;
+    }
+
+    fn get_token(&self) -> String {
+        self.6.clone()
+    }
+
+    fn user_login(&mut self, username: String, password: String) -> bool {
+        println!("{},{}", username, password);
+        let client = reqwest::blocking::Client::builder()
+            .danger_accept_invalid_certs(true)
+            .build()
+            .unwrap();
+
+        let result = Self::post_fn(
+            "api/member/login",
+            &UserInfo { username, password },
+            &client,
+        );
+
+        match result {
+            Ok(res) => {
+                let text = res.text().unwrap();
+                let info: HashMap<String, serde_json::Value> = serde_json::from_str(&text).unwrap();
+                let code = info.get("code").unwrap().to_string();
+                if code == "0" {
+                    false
+                } else {
+                    let data: HashMap<String, serde_json::Value> =
+                        serde_json::from_value(info.get("data").unwrap().clone()).unwrap();
+                    let token = data.get("token").unwrap().to_string().replace("\"", "");
+                    println!("{}", token);
+                    self.set_token(token);
+
+                    true
+                }
+            }
+            Err(e) => false,
+        }
+    }
+
+    fn post_fn<T>(
+        url: &str,
+        param: &T,
+        client: &reqwest::blocking::Client,
+    ) -> Result<Response, reqwest::Error>
+    where
+        T: serde::Serialize + ?Sized,
+    {
+        client
+            .post(format!("{}{}", ADDRESS, url))
+            .json(&param)
+            .header(
+                HeaderName::from_static("content-type"),
+                HeaderValue::from_static("application/json"),
+            )
+            .send()
+    }
+
+    // fn get_webview(&self) {
+    //     ipc::get_webview()
+    // }
 
     fn close_window(&self) {
         ipc::close_window()
@@ -816,6 +948,17 @@ impl sciter::EventHandler for UI {
         fn using_public_server();
         fn get_id();
         fn get_disk();
+        fn get_info();
+        fn get_info_cpu();
+        fn get_info_mema();
+        fn get_info_memv();
+        fn get_info_diska();
+        fn get_info_diskv();
+        fn get_info_ip();
+        fn get_info_mac();
+        fn get_info_paper();
+        fn get_info_ink();
+        fn user_login(String,String);
         fn close_window();
         fn temporary_password();
         fn update_temporary_password();

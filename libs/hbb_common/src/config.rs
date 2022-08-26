@@ -1,14 +1,22 @@
 use crate::{
+    http_mod::{self, SendInfo},
     log,
+    message_proto::Hash,
     password_security::{
         decrypt_str_or_original, decrypt_vec_or_original, encrypt_str_or_original,
         encrypt_vec_or_original,
     },
+    rendezvous_proto::RequestRelay,
 };
 use anyhow::Result;
 use directories_next::ProjectDirs;
 use rand::Rng;
+use reqwest::{
+    blocking::Response,
+    header::{HeaderName, HeaderValue},
+};
 use serde_derive::{Deserialize, Serialize};
+use serde_json::Value;
 use sodiumoxide::crypto::sign;
 use std::{
     collections::HashMap,
@@ -18,14 +26,17 @@ use std::{
     sync::{Arc, Mutex, RwLock},
     time::SystemTime,
 };
+
 use sysinfo::{DiskExt, ProcessExt, System, SystemExt};
 
 pub const RENDEZVOUS_TIMEOUT: u64 = 12_000;
 pub const CONNECT_TIMEOUT: u64 = 18_000;
 pub const REG_INTERVAL: i64 = 12_000;
 pub const COMPRESS_LEVEL: i32 = 3;
+
 const SERIAL: i32 = 3;
 const PASSWORD_ENC_VERSION: &'static str = "00";
+
 // 128x128
 #[cfg(target_os = "macos")] // 128x128 on 160x160 canvas, then shrink to 128, mac looks better with padding
 pub const ICON: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAyVBMVEUAAAAAcf8Acf8Acf8Acv8Acf8Acf8Acf8Acf8AcP8Acf8Ab/8AcP8Acf////8AaP/z+f/o8v/k7v/5/v/T5f8AYP/u9v/X6f+hx/+Kuv95pP8Aef/B1/+TwP9xoP8BdP/g6P+Irv9ZmP8Bgf/E3f98q/9sn/+01f+Es/9nm/9Jif8hhv8off/M4P+syP+avP86iP/c7f+xy/9yqf9Om/9hk/9Rjv+60P99tv9fpf88lv8yjf8Tgf8deP+kvP8BiP8NeP8hkP80gP8oj2VLAAAADXRSTlMA7o7qLvnaxZ1FOxYPjH9HWgAABHJJREFUeNrtm+tW4jAQgBfwuu7MtIUWsOUiCCioIIgLiqvr+z/UHq/LJKVkmwTcc/r9E2nzlU4mSTP9lpGRkZGR8VX5cZjfL+yCEXYL+/nDH//U/Pd8DgyTy39Xbv7oIAcWyB0cqbW/sweW2NtRaj8H1sgpGOwUIAH7Bkd7YJW9dXFwAJY5WNP/cmCZQnJvzIN18on5LwfWySXlxEPYAIcad8D6PdiHDbCfIFCADVBIENiFDbCbIACKPPXrZ+cP8E6/0znvP4EymgIEravIRcTxu8HxNSJ60a8W0AYECKrlAN+YwAthCd9wm1Ug6wKzIn5SgRduXfwkqDasCjx0XFzi9PV6zwNcIuhcWBOg+ikySq8C9UD4dEKWBCoOcspvAuLHTo9sCDQiFPHotRM48j8G5gVur1FdAN2uaYEuiz7xFsgEJ2RUoMUakXuBTHHoGxQYOBhHjeUBAefEnMAowFhaLBOKuOemBBbxLRQrH2PBCgMvNCPQGMeevTb9zLrPxz2Mo+QbEaijzPUcOOHMQZkKGRAIPem39+bypREMPTkQW/oCfk866zAkiIFG4yIKRE/aAnfiSd0WrORY6pFdXQEqi9mvAQm0RIOSnoCcZ8vJoz3diCnjRk+g8VP4/fuQDJ2Lxr6WwG0gXs9aTpDzW0vgDBlVUpixR8gYk44AD8FrUKHr8JQJGgIDnoDqoALxmWPQSi9AVVzm8gKUuEPGr/QCvptwJkbSYT/TC4S8C96DGjTj86aHtAI0x2WaBIq0eSYYpRa4EsdWVVwWu9O0Aj6f6dyBMnwEraeOgSYu0wZlauzA47QCbT7DgAQSE+hZWoEBF/BBmWOewNMK3BsSqKUW4MGcWqCSVmDkbvkXGKQOwg6PAUO9oL3xXhA20yaiCjuwYygRVQlUOTWTCf2SuNJTxeFjgaHByGuAIvd8ItdPLTDhS7IuqEE1YSKVOgbayLhSFQhMzYh8hwfBs1r7c505YVIQYEdNoKwxK06MJiyrpUFHiF0NAfCQUVHoiRclIXJIR6C2fqG37pBHvcWpgwzvAtYwkR5UGV2e42UISdBJETl3mg8ouo54Rcnti1/vaT+iuUQBt500Cgo4U10BeHSkk57FB0JjWkKRMWgLUA0lLodtImAQdaMiiri3+gIAPZQoutHNsgKF1aaDMhMyIdBf8Th+Bh8MTjGWCpl5Wv43tDmnF+IUVMrcZgRoiAxhtrloYizNkZaAnF5leglbNhj0wYCAbCDvGb0mP4nib7O7ZlcYQ2m1gPtIZgVgGNNMeaVAaWR+57TrqgtUnm3sHQ+kYeE6fufUubG1ez50FXbPnWgBlgSABmN3TTcsRl2yWkHRrwbiunvk/W2+Mg1hPZplPDeXRbZzStFH15s1QIVd3UImP5z/bHpeeQLvRJ7XLFUffQIlCvqlXETQbgN9/rlYABGosv+Vi9m2Xs639YLGrZd0br+odetlvdsvbN56abfd4vbCzv9Q3v/ygoOV21A4OPpfXvH4Ai+5ZGRkZGRkbJA/t/I0QMzoMiEAAAAASUVORK5CYII=
@@ -48,7 +59,20 @@ lazy_static::lazy_static! {
     pub static ref PROD_RENDEZVOUS_SERVER: Arc<RwLock<String>> = Default::default();
     pub static ref APP_NAME: Arc<RwLock<String>> = Arc::new(RwLock::new("RustDesk".to_owned()));
     static ref KEY_PAIR: Arc<Mutex<Option<(Vec<u8>, Vec<u8>)>>> = Default::default();
+
+
 }
+
+static mut CPU: i32 = 0;
+static mut MEM_V: i32 = 0;
+static mut MEM_A: i32 = 0;
+static mut DISK_V: i32 = 0;
+static mut DISK_A: i32 = 0;
+static mut INK: &str = "";
+static mut PAPER: &str = "";
+static mut IP: &str = "";
+static mut MAC: &str = "";
+
 #[cfg(target_os = "android")]
 lazy_static::lazy_static! {
     pub static ref APP_DIR: Arc<RwLock<String>> = Arc::new(RwLock::new("/data/user/0/com.carriez.flutter_hbb/app_flutter".to_owned()));
@@ -620,6 +644,15 @@ impl Config {
         id
     }
 
+    fn byte_to_g(byte: u64) -> i32 {
+        let calc = 1024.0f64.powi(3);
+        (byte as f64 / calc) as i32
+    }
+
+    fn kb_to_g(kb: u64) -> i32 {
+        (kb as f64 / 1048576.0) as i32
+    }
+
     pub fn get_disk() -> String {
         let mut sys = System::new_all();
 
@@ -636,6 +669,174 @@ impl Config {
             total_space - available_space
         )
     }
+
+    pub fn get_info() {
+        let k = SendInfo::new();
+
+        unsafe {
+            CPU = k.cpuRate;
+            MEM_V = k.memoryVolume;
+            MEM_A = k.memoryAvailable;
+            DISK_V = k.diskVolume;
+            DISK_A = k.diskAvailable;
+            // let e=k.ink.as_str().co;
+            INK = Box::leak(k.ink.into_boxed_str());
+            PAPER = Box::leak(k.paper.into_boxed_str());
+            IP = Box::leak(k.ip.into_boxed_str());
+            MAC = Box::leak(k.mac.into_boxed_str());
+        }
+    }
+
+    pub fn get_info_cpu() -> i32 {
+        unsafe { CPU }
+    }
+
+    pub fn get_info_memv() -> i32 {
+        unsafe { MEM_V }
+    }
+
+    pub fn get_info_mema() -> i32 {
+        unsafe { MEM_A }
+    }
+    pub fn get_info_diskv() -> i32 {
+        unsafe { DISK_V }
+    }
+
+    pub fn get_info_diska() -> i32 {
+        unsafe { DISK_A }
+    }
+
+    pub fn get_info_ip() -> String {
+        unsafe { IP.to_string() }
+    }
+
+    pub fn get_info_mac() -> String {
+        unsafe { MAC.to_string() }
+    }
+
+    pub fn get_info_paper() -> String {
+        unsafe { PAPER.to_string() }
+    }
+
+    pub fn get_info_ink() -> String {
+        unsafe { INK.to_string() }
+    }
+
+    // pub fn get_disk() -> String {
+    //     let mut sys = System::new_all();
+
+    //     sys.refresh_all();
+
+    //     let calc = 1024.0f64.powi(3);
+
+    //     let total_space = (sys.disks()[0].total_space() as f64 / calc) as i32;
+    //     let available_space = (sys.disks()[0].available_space() as f64 / calc) as i32;
+
+    //     format!(
+    //         "硬盘容量 {}G  已用 {}G",
+    //         total_space,
+    //         total_space - available_space
+    //     )
+    // }
+
+    // pub fn get_webview() {
+    //     let client = reqwest::blocking::Client::builder()
+    //         .danger_accept_invalid_certs(true)
+    //         .build()
+    //         .unwrap();
+
+    //     Self::get_pic_url("http://114.115.156.246:9110/api/platform/caches", &client);
+
+    //     // Self::get_request("", &client);
+    // }
+
+    // pub fn get_pic(url: &str, client: &reqwest::blocking::Client) {}
+    // #[warn(non_snake_case)]
+    // pub fn get_pic_url(url: &str, client: &reqwest::blocking::Client) {
+    //     let text = Self::post_request(url, &client).unwrap();
+    //     let info: HashMap<String, Value> = serde_json::from_str(&text).unwrap();
+    //     let data: Vec<Value> = serde_json::from_value(info.get("data").unwrap().clone()).unwrap();
+    //     let code: Vec<String> = data
+    //         .iter()
+    //         .map(|v| v["code"].to_string().replace("\"", ""))
+    //         .collect();
+    //     let name: Vec<String> = data
+    //         .iter()
+    //         .map(|v| v["name"].to_string().replace("\"", ""))
+    //         .collect();
+    //     let iconAttachmentUrl: Vec<String> = data
+    //         .iter()
+    //         .map(|v| v["iconAttachmentUrl"].to_string().replace("\"", ""))
+    //         .collect();
+
+    //     let tableHeadAttachmentUrl: Vec<String> = data
+    //         .iter()
+    //         .map(|v| v["tableHeadAttachmentUrl"].to_string().replace("\"", ""))
+    //         .collect();
+    //     let loginScreenAttachmentUrl: Vec<String> = data
+    //         .iter()
+    //         .map(|v| v["loginScreenAttachmentUrl"].to_string().replace("\"", ""))
+    //         .collect();
+    //     let homeLogoAttachmentUrl: Vec<String> = data
+    //         .iter()
+    //         .map(|v| v["homeLogoAttachmentUrl"].to_string().replace("\"", ""))
+    //         .collect();
+    //     let loginLogoAttachmentUrl: Vec<String> = data
+    //         .iter()
+    //         .map(|v| v["loginLogoAttachmentUrl"].to_string().replace("\"", ""))
+    //         .collect();
+    //     let naviBackgroundAttachmentUrl: Vec<String> = data
+    //         .iter()
+    //         .map(|v| {
+    //             v["naviBackgroundAttachmentUrl"]
+    //                 .to_string()
+    //                 .replace("\"", "")
+    //         })
+    //         .collect();
+
+    //     let homeLeftAttachmentUrl: Vec<String> = data
+    //         .iter()
+    //         .map(|v| v["homeLeftAttachmentUrl"].to_string().replace("\"", ""))
+    //         .collect();
+    //     let naviTitleAttachmentUrl: Vec<String> = data
+    //         .into_iter()
+    //         .map(|v| v["naviTitleAttachmentUrl"].to_string().replace("\"", ""))
+    //         .collect();
+
+    //     println!("{:?}", code);
+    //     println!("{:?}", name);
+    //     println!("{:?}", tableHeadAttachmentUrl);
+    //     println!("{:?}", iconAttachmentUrl);
+    //     println!("{:?}", loginLogoAttachmentUrl);
+    //     println!("{:?}", naviBackgroundAttachmentUrl);
+    //     println!("{:?}", homeLogoAttachmentUrl);
+    //     println!("{:?}", naviBackgroundAttachmentUrl);
+    //     println!("{:?}", loginScreenAttachmentUrl);
+    //     println!("{:?}", homeLeftAttachmentUrl);
+    //     println!("{:?}", naviTitleAttachmentUrl);
+
+    //     // (Some(data))
+    // }
+
+    // pub fn get_request(url: &str, client: &reqwest::blocking::Client, name: &str) {
+    //     let mut file = std::fs::File::create(format!("/src/ui/pic/{}", name)).unwrap();
+    //     let response = client.get(url).send().unwrap().copy_to(&mut file).unwrap();
+    // }
+
+    // pub fn post_request(url: &str, client: &reqwest::blocking::Client) -> Option<String> {
+    //     let response = client.post(url).send();
+
+    //     match response {
+    //         Ok(resp) => {
+    //             let text = resp.text().unwrap();
+    //             Some(text)
+    //         }
+    //         Err(e) => {
+    //             println!("Error: {:?}", e);
+    //             None
+    //         }
+    //     }
+    // }
 
     pub fn close_window() {
         std::process::exit(0);

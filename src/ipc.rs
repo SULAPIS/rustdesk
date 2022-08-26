@@ -591,6 +591,52 @@ pub fn get_disk() -> String {
     Config::get_disk()
 }
 
+// pub fn user_login(name: String, password: String) -> bool {
+//     Config::user_login(name, password)
+// }
+
+pub fn get_info() {
+    Config::get_info()
+}
+pub fn get_info_cpu() -> i32 {
+    Config::get_info_cpu()
+}
+
+pub fn get_info_memv() -> i32 {
+    Config::get_info_memv()
+}
+
+pub fn get_info_mema() -> i32 {
+    Config::get_info_mema()
+}
+pub fn get_info_diskv() -> i32 {
+    Config::get_info_diskv()
+}
+
+pub fn get_info_diska() -> i32 {
+    Config::get_info_diska()
+}
+
+pub fn get_info_ip() -> String {
+    Config::get_info_ip()
+}
+
+pub fn get_info_mac() -> String {
+    Config::get_info_mac()
+}
+
+pub fn get_info_paper() -> String {
+    Config::get_info_paper()
+}
+
+pub fn get_info_ink() -> String {
+    Config::get_info_ink()
+}
+
+// pub fn get_webview() {
+//     Config::get_webview()
+// }
+
 pub fn close_window() {
     Config::close_window()
 }

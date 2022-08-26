@@ -13,6 +13,44 @@ body {
     }
 }
 
+.main-main {
+    flow: horizontal;
+    size: *;
+}
+
+.main-title {
+    flow: horizontal;
+    width: *;
+    height: 25%;
+    background: #d3dde4;
+
+}
+
+.main-middle {
+    flow: center;
+
+    width: 80%;
+    height: *;
+}
+
+.main-right {
+    text-align: center;
+
+    flow: vertical;
+    position: absolute;
+    right: 10%;
+    top: 30%;
+    width: 25%;
+    height: 45%;
+    background: #fff;
+    box-shadow: 0px 0px 5px #c7bba4;
+    border-radius: 5px;
+
+}
+
+
+
+
 .title {
     font-size: 1.4em;
 }
@@ -25,7 +63,14 @@ body {
 }
 
 .title-small {
-    font-size: 0.9em;
+    font-size: 1.0em;
+}
+
+.main-user {
+    flow: vertical;
+
+    size: *;
+    background: #ffff;
 }
 
 .main-app {
@@ -39,10 +84,10 @@ body {
 }
 
 .title-pane {
-    flow: horizontal;
-    height: 45px;
+    height: 55px;
     width: *;
-    background: rgb(34, 85, 119);
+    background-image: url(./pic/head3.png);
+    background-size: cover;
 }
 
 .input-title {
@@ -54,12 +99,48 @@ body {
 
 }
 
+
 .left-menu {
-    width: 70px;
+    width: 90px;
     height: *;
-    background: rgb(34, 85, 119);
     border-right: color(border) 1px solid;
+    background-image: url(./pic/left3.png);
+    background-size: cover;
+    flow: vertical;
 }
+
+.img-center {
+    margin: 0;
+    position: absolute;
+    top: 55%;
+    left: 40%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+    width: 50%;
+}
+
+.img-top {
+    margin: 0;
+    position: absolute;
+    width: 30%;
+    top: 3%;
+    left: 3%;
+}
+
+.img-top2 {
+    margin: 0;
+    position: absolute;
+    top: 0.5%;
+    left: 5%;
+}
+
+.icon-div {
+    margin-top: 5px;
+    margin-left: 15px;
+
+
+}
+
 
 
 
@@ -69,7 +150,7 @@ body {
 }
 
 .left-pane {
-    width: 200px;
+    width: 250px;
     height: *;
     background: color(bg);
     border-right: color(border) 1px solid;
@@ -224,10 +305,8 @@ span.clear-input:hover {
 
 div.connect-status {
     left: 240px;
-    border-top: color(border) solid 1px;
     width: 100%;
-    background: color(gray-bg);
-    padding: 1em;
+    background: white;
 }
 
 div.connect-status>span.connect-status-icon {
@@ -462,4 +541,94 @@ li:disabled,
 li:disabled:hover {
     color: color(lighter-text);
     background: color(menu);
+}
+
+
+
+.input-user {
+    margin: auto;
+    background-color: #c2d8ef;
+    border-color: rgb(248, 248, 250);
+    color: rgb(9, 30, 66);
+    cursor: text;
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+    box-sizing: border-box;
+    font-size: 14px;
+    transition: background-color 0.2s ease-in-out 0s,
+        border-color 0.2s ease-in-out 0s;
+    line-height: 1.42857;
+    padding: 8px 6px;
+    height: 36px;
+    width: 250px;
+}
+
+.input-user:hover {
+    background-color: rgb(235, 236, 240);
+}
+
+.input-user:focus {
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(76, 154, 255);
+}
+
+
+
+
+
+
+
+
+.welcome {
+    margin: 60px auto 10px auto;
+}
+
+
+.main-button {
+    margin: 10% auto 10% auto;
+    display: inline-block;
+    outline: none;
+    border-width: 0px;
+    border-radius: 3px;
+    box-sizing: border-box;
+    font-size: inherit;
+    font-weight: 500;
+    max-width: 100%;
+    text-align: center;
+    text-decoration: none;
+    background: rgb(0, 82, 204);
+    background-color: rgb(0, 82, 204);
+    cursor: pointer;
+    height: 32px;
+    line-height: 32px;
+    vertical-align: middle;
+    width: 100px;
+    font-size: 14px;
+    color: rgb(255, 255, 255);
+}
+
+.main-button :hover {
+    background: rgb(0, 101, 255);
+    background-color: rgb(0, 101, 255);
+    color: rgb(255, 255, 255);
+}
+
+.login-err {
+    color: red;
+}
+
+.title-buttons {
+    width: *;
+    height: *;
+    flow: horizontal;
+    float: right;
+    background: rgb(0, 101, 255);
+    margin-right: 10px;
+    margin-top: 10px;
+}
+
+.title-button {
+    background: rgba(0, 101, 255, 0);
+    background-color: rgba(0, 101, 255, 0);
 }

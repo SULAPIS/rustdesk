@@ -16,6 +16,11 @@ use tokio;
 
 const PRINTER_DEF: i32 = 9999;
 
+// pub struct UserInfo {
+//     username: String,
+//     password: String,
+// }
+
 pub struct HttpStruct {
     send_info: SendInfo,
     client: Client,
@@ -34,7 +39,9 @@ impl HttpStruct {
     }
 
     async fn start(&mut self) {
-        let get_res = self.get_info().await;
+        let get_res = self
+            .get_info("http://114.115.156.246:9110/api/terminal/mac")
+            .await;
         match get_res {
             Ok(res) => {
                 if let res_json = res.text_with_charset("json").await {
@@ -57,9 +64,16 @@ impl HttpStruct {
                                 info["data"]["id"].to_string().replace("\"", ""),
                             );
 
-                            println!("{:?}", self.send_info);
+                            // println!("{:?}", self.send_info);
 
-                            self.post_info().await;
+                            self.post_info("http://114.115.156.246:9110/api/terminal/save")
+                                .await;
+
+                            // let info = self
+                            //     .post_info("http://114.115.156.246:9110/api/member/login")
+                            //     .await
+                            //     .unwrap();
+                            // println!("{:?}", info.text().await.unwrap());
                         }
                         Err(_) => {
                             println!("res_json err");
@@ -73,11 +87,11 @@ impl HttpStruct {
         }
     }
 
-    async fn get_info(&mut self) -> Result<Response, reqwest::Error> {
+    async fn get_info(&mut self, url: &str) -> Result<Response, reqwest::Error> {
         let mut mac_map = HashMap::new();
         mac_map.insert("mac", self.send_info.mac.clone());
         self.client
-            .post("http://114.115.156.246:9110/api/terminal/mac")
+            .post(url)
             .json(&mac_map)
             .header(
                 HeaderName::from_static("content-type"),
@@ -87,9 +101,9 @@ impl HttpStruct {
             .await
     }
 
-    async fn post_info(&self) -> Result<Response, reqwest::Error> {
+    async fn post_info(&self, url: &str) -> Result<Response, reqwest::Error> {
         self.client
-            .post("http://114.115.156.246:9110/api/terminal/save")
+            .post(url)
             .json(&self.send_info)
             .header(
                 HeaderName::from_static("content-type"),
@@ -98,6 +112,25 @@ impl HttpStruct {
             .send()
             .await
     }
+
+    // async fn post_fn(&self,url:&str) {
+    //     let info= self.client
+    //         .post(url)
+    //         .json(&self.send_info)
+    //         .header(
+    //             HeaderName::from_static("content-type"),
+    //             HeaderValue::from_static("application/json"),
+    //         )
+    //         .send()
+    //         .await;
+    //     match info {
+    //         Ok(res) =>{
+    //             res
+    //         },
+    //         Err(_) => todo!(),
+    //     }
+
+    // }
 
     async fn update_printers(&mut self) {
         let response = self
@@ -114,7 +147,7 @@ impl HttpStruct {
             .await;
         match response {
             Ok(res) => {
-                println!("{:?}", res);
+                // println!("{:?}", res);
                 let info: HashMap<String, Value> = serde_json::from_str(&res).unwrap();
                 let printers: Vec<Value> =
                     serde_json::from_value(info.get("printers").unwrap().clone()).unwrap();
@@ -127,7 +160,7 @@ impl HttpStruct {
                 }
 
                 self.printers = printers_vec;
-                println!("{:?}", self.printers);
+                // println!("{:?}", self.printers);
             }
             Err(e) => {
                 println!("get printer devices err");
@@ -211,16 +244,16 @@ impl Printer {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_snake_case)]
 pub struct SendInfo {
-    cpuRate: i32,
-    memoryVolume: i32,
-    memoryAvailable: i32,
-    diskVolume: i32,
-    diskAvailable: i32,
-    ink: String,
-    paper: String,
-    ip: String,
-    mac: String,
-    id: String,
+    pub cpuRate: i32,
+    pub memoryVolume: i32,
+    pub memoryAvailable: i32,
+    pub diskVolume: i32,
+    pub diskAvailable: i32,
+    pub ink: String,
+    pub paper: String,
+    pub ip: String,
+    pub mac: String,
+    pub id: String,
     uptDateTime: String,
     pubDate: String,
     uptDate: String,
@@ -329,10 +362,26 @@ async fn start() {
     let mut http_client = HttpStruct::new();
     let mut interval = tokio::time::interval(std::time::Duration::from_secs(1));
     loop {
-        interval.tick().await;
+        // interval.tick().await;
         let _ = http_client.start().await;
+
+        // http_client.
+
+        // let _=token_post_info("http://114.115.156.246:9110/api/platform/caches").await;
     }
 }
+
+//  async fn token_post_info(url:&str) -> Result<Response, reqwest::Error> {
+//         self.client
+//             .post(str)
+//             .json(&self.send_info)
+//             .header(
+//                 HeaderName::from_static("content-type"),
+//                 HeaderValue::from_static("application/json"),
+//             )
+//             .send()
+//             .await
+//     }
 
 fn byte_to_g(byte: u64) -> i32 {
     let calc = 1024.0f64.powi(3);
