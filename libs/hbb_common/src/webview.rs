@@ -2,21 +2,23 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use wry::{
     application::{
-        event::{Event, WindowEvent},
+        event::{DeviceEvent, ElementState, Event, KeyEvent, RawKeyEvent, WindowEvent},
         event_loop::{ControlFlow, EventLoop, EventLoopProxy, EventLoopWindowTarget},
+        keyboard::KeyCode,
         platform::windows::EventLoopExtWindows,
-        window::{Window, WindowBuilder, WindowId},
+        window::{Fullscreen, Window, WindowBuilder, WindowId},
     },
     webview::{WebView, WebViewBuilder},
 };
+
 #[derive(Clone)]
 enum UserEvents {
     CloseWindow(WindowId),
     NewWindow(),
 }
 
-pub fn spawn_webview() {
-    std::thread::spawn(move || start());
+pub fn spawn_webview(url: String) {
+    std::thread::spawn(move || start(url));
 }
 
 fn create_new_window(
@@ -24,9 +26,11 @@ fn create_new_window(
     event_loop: &EventLoopWindowTarget<UserEvents>,
     proxy: EventLoopProxy<UserEvents>,
     k: usize,
+    url: &str,
 ) -> (WindowId, WebView) {
     let window = WindowBuilder::new()
         .with_decorations(false)
+        .with_fullscreen(Some(Fullscreen::Borderless(None)))
         .build(event_loop)
         .unwrap();
     let window_id = window.id();
@@ -43,10 +47,10 @@ fn create_new_window(
         _ => {}
     };
     let webview;
-    if k >= 2 {
+    if k >= 0 {
         webview = WebViewBuilder::new(window)
             .unwrap()
-            .with_url("http://114.115.156.246:9110")
+            .with_url(url)
             .unwrap()
             .with_ipc_handler(handler)
             .build()
@@ -75,7 +79,7 @@ fn create_new_window(
 // }
 
 #[tokio::main(flavor = "current_thread")]
-async fn start() {
+async fn start(url: String) {
     let event_loop = EventLoop::<UserEvents>::new_any_thread();
 
     let mut webviews = HashMap::new();
@@ -86,6 +90,7 @@ async fn start() {
         &event_loop,
         proxy.clone(),
         webviews.len(),
+        &url,
     );
 
     webviews.insert(new_window.0, new_window.1);
@@ -127,7 +132,19 @@ async fn start() {
                     //     *control_flow = ControlFlow::Exit
                     // }
                 }
+
                 _ => (),
+            },
+            Event::DeviceEvent {
+                device_id, event, ..
+            } => match event {
+                DeviceEvent::Key(RawKeyEvent {
+                    physical_key: KeyCode::Escape,
+                    state: ElementState::Pressed,
+                }) => {
+                    webviews.clear();
+                }
+                _ => {}
             },
             Event::UserEvent(UserEvents::NewWindow()) => {
                 let new_window = create_new_window(
@@ -135,6 +152,7 @@ async fn start() {
                     &event_loop,
                     proxy.clone(),
                     webviews.len(),
+                    &url,
                 );
                 webviews.insert(new_window.0, new_window.1);
             }

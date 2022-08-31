@@ -20,6 +20,7 @@ pub mod http_mod;
 pub mod socket_client;
 pub mod tcp;
 pub mod webview;
+pub use sysinfo;
 pub use wry;
 
 pub mod udp;

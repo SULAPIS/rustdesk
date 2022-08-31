@@ -8,7 +8,7 @@ use hbb_common::{
     config::{self, Config, Config2},
     futures::StreamExt as _,
     futures_util::sink::SinkExt,
-    log, password_security as password, timeout, tokio,
+    log, password_security as password, sysinfo, timeout, tokio,
     tokio::io::{AsyncRead, AsyncWrite},
     tokio_util::codec::Framed,
     ResultType,
@@ -595,25 +595,25 @@ pub fn get_disk() -> String {
 //     Config::user_login(name, password)
 // }
 
-pub fn get_info() {
-    Config::get_info()
+pub fn get_info(sysinfo: &mut sysinfo::System) {
+    Config::get_info(sysinfo)
 }
-pub fn get_info_cpu() -> i32 {
+pub fn get_info_cpu() -> String {
     Config::get_info_cpu()
 }
 
-pub fn get_info_memv() -> i32 {
+pub fn get_info_memv() -> String {
     Config::get_info_memv()
 }
 
-pub fn get_info_mema() -> i32 {
+pub fn get_info_mema() -> String {
     Config::get_info_mema()
 }
-pub fn get_info_diskv() -> i32 {
+pub fn get_info_diskv() -> String {
     Config::get_info_diskv()
 }
 
-pub fn get_info_diska() -> i32 {
+pub fn get_info_diska() -> String {
     Config::get_info_diska()
 }
 

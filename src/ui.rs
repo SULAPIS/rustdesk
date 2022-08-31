@@ -1,4 +1,5 @@
 mod cm;
+
 #[cfg(feature = "inline")]
 mod inline;
 #[cfg(target_os = "macos")]
@@ -16,8 +17,10 @@ use hbb_common::{
     protobuf::Message as _,
     rendezvous_proto::*,
     sleep,
+    sysinfo::{self, System, SystemExt},
     tcp::FramedStream,
     tokio::{self, sync::mpsc, time},
+    webview,
 };
 use reqwest::{
     blocking::Response,
@@ -32,7 +35,6 @@ use std::{
     process::Child,
     sync::{Arc, Mutex},
 };
-
 type Message = RendezvousMessage;
 
 pub type Childs = Arc<Mutex<(bool, HashMap<(String, String), Child>)>>;
@@ -57,6 +59,7 @@ struct UI(
     mpsc::UnboundedSender<ipc::Data>,
     Arc<Mutex<String>>,
     String,
+    System,
 );
 
 struct UIHostHandler;
@@ -219,6 +222,7 @@ impl UI {
             res.2,
             res.3,
             String::new(),
+            sysinfo::System::new_all(),
         )
     }
 
@@ -239,26 +243,26 @@ impl UI {
     fn get_disk(&self) -> String {
         ipc::get_disk()
     }
-    fn get_info(&self) {
-        ipc::get_info()
+    fn get_info(&mut self) {
+        ipc::get_info(&mut self.7)
     }
 
-    fn get_info_cpu(&self) -> i32 {
+    fn get_info_cpu(&self) -> String {
         ipc::get_info_cpu()
     }
 
-    fn get_info_memv(&self) -> i32 {
+    fn get_info_memv(&self) -> String {
         ipc::get_info_memv()
     }
 
-    fn get_info_mema(&self) -> i32 {
+    fn get_info_mema(&self) -> String {
         ipc::get_info_mema()
     }
-    fn get_info_diskv(&self) -> i32 {
+    fn get_info_diskv(&self) -> String {
         ipc::get_info_diskv()
     }
 
-    fn get_info_diska(&self) -> i32 {
+    fn get_info_diska(&self) -> String {
         ipc::get_info_diska()
     }
 
@@ -286,7 +290,7 @@ impl UI {
         self.6.clone()
     }
 
-    fn user_login(&mut self, username: String, password: String) -> bool {
+    fn user_login(&mut self, username: String, password: String) -> String {
         println!("{},{}", username, password);
         let client = reqwest::blocking::Client::builder()
             .danger_accept_invalid_certs(true)
@@ -305,18 +309,18 @@ impl UI {
                 let info: HashMap<String, serde_json::Value> = serde_json::from_str(&text).unwrap();
                 let code = info.get("code").unwrap().to_string();
                 if code == "0" {
-                    false
+                    String::new()
                 } else {
                     let data: HashMap<String, serde_json::Value> =
                         serde_json::from_value(info.get("data").unwrap().clone()).unwrap();
                     let token = data.get("token").unwrap().to_string().replace("\"", "");
                     println!("{}", token);
-                    self.set_token(token);
+                    self.set_token(token.clone());
 
-                    true
+                    token
                 }
             }
-            Err(e) => false,
+            Err(e) => String::new(),
         }
     }
 
@@ -905,6 +909,11 @@ impl UI {
         });
     }
 
+    fn open_url_page(&self, url: String) {
+        println!("{}", url);
+        webview::spawn_webview(url);
+    }
+
     fn is_ok_change_id(&self) -> bool {
         machine_uid::get().is_ok()
     }
@@ -1026,6 +1035,7 @@ impl sciter::EventHandler for UI {
         fn change_id(String);
         fn get_async_job_status();
         fn post_request(String, String, String);
+        fn open_url_page(String);
         fn is_ok_change_id();
         fn create_shortcut(String);
         fn discover();

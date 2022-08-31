@@ -196,9 +196,9 @@ function handler.onMouse(evt)
         if (!keyboard_enabled && !useSystemCursor) {
             updateCursor(true);
         }
-        if (keyboard_enabled && useSystemCursor) {
-            updateCursor();
-        }
+        // if (keyboard_enabled && useSystemCursor) {
+        //     updateCursor();
+        // }
         break;
       case Event.MOUSE_WHEEL:
         // mouseWheelDistance = 8 * [currentUserDefs floatForKey:@"com.apple.scrollwheel.scaling"];

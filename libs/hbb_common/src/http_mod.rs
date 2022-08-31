@@ -25,16 +25,19 @@ pub struct HttpStruct {
     send_info: SendInfo,
     client: Client,
     printers: Vec<Printer>,
+    sysinfo: System,
 }
 impl HttpStruct {
     pub fn new() -> Self {
+        let mut sysinfo = System::new_all();
         Self {
-            send_info: SendInfo::new(),
+            send_info: SendInfo::new(&mut sysinfo),
             client: reqwest::Client::builder()
                 .danger_accept_invalid_certs(true)
                 .build()
                 .unwrap(),
             printers: Vec::new(),
+            sysinfo,
         }
     }
 
@@ -62,18 +65,13 @@ impl HttpStruct {
                                 info["data"]["uptDate"].to_string().replace("\"", ""),
                                 info["data"]["pubDateTime"].to_string().replace("\"", ""),
                                 info["data"]["id"].to_string().replace("\"", ""),
+                                &mut self.sysinfo,
                             );
 
-                            // println!("{:?}", self.send_info);
+                            println!("{:?}", self.send_info);
 
                             self.post_info("http://114.115.156.246:9110/api/terminal/save")
                                 .await;
-
-                            // let info = self
-                            //     .post_info("http://114.115.156.246:9110/api/member/login")
-                            //     .await
-                            //     .unwrap();
-                            // println!("{:?}", info.text().await.unwrap());
                         }
                         Err(_) => {
                             println!("res_json err");
@@ -112,26 +110,6 @@ impl HttpStruct {
             .send()
             .await
     }
-
-    // async fn post_fn(&self,url:&str) {
-    //     let info= self.client
-    //         .post(url)
-    //         .json(&self.send_info)
-    //         .header(
-    //             HeaderName::from_static("content-type"),
-    //             HeaderValue::from_static("application/json"),
-    //         )
-    //         .send()
-    //         .await;
-    //     match info {
-    //         Ok(res) =>{
-    //             res
-    //         },
-    //         Err(_) => todo!(),
-    //     }
-
-    // }
-
     async fn update_printers(&mut self) {
         let response = self
             .client
@@ -244,11 +222,11 @@ impl Printer {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_snake_case)]
 pub struct SendInfo {
-    pub cpuRate: i32,
-    pub memoryVolume: i32,
-    pub memoryAvailable: i32,
-    pub diskVolume: i32,
-    pub diskAvailable: i32,
+    pub cpuRate: String,
+    pub memoryVolume: String,
+    pub memoryAvailable: String,
+    pub diskVolume: String,
+    pub diskAvailable: String,
     pub ink: String,
     pub paper: String,
     pub ip: String,
@@ -261,11 +239,9 @@ pub struct SendInfo {
 }
 #[allow(non_snake_case)]
 impl SendInfo {
-    pub fn new() -> Self {
-        let mut sys = System::new_all();
+    pub fn new(sys: &mut System) -> Self {
         sys.refresh_all();
         let mac = mac_address::get_mac_address().unwrap().unwrap().to_string();
-        sys.refresh_all();
 
         let mut allDiskSpace = 0;
         let mut availableSpace = 0;
@@ -273,11 +249,11 @@ impl SendInfo {
             allDiskSpace += disk.total_space();
             availableSpace += disk.available_space();
         }
-        let diskVolume = byte_to_g(allDiskSpace);
-        let diskAvailable = byte_to_g(availableSpace);
-        let cpuRate = sys.cpus()[0].cpu_usage() as i32;
-        let memoryVolume = kb_to_g(sys.total_memory());
-        let memoryAvailable = kb_to_g(sys.available_memory());
+        let diskVolume = byte_to_g(allDiskSpace).to_string();
+        let diskAvailable = byte_to_g(availableSpace).to_string();
+        let cpuRate = sys.cpus()[0].cpu_usage().to_string();
+        let memoryVolume = kb_to_g(sys.total_memory()).to_string();
+        let memoryAvailable = kb_to_g(sys.available_memory()).to_string();
 
         let ip = local_ip().unwrap().to_string();
 
@@ -308,11 +284,10 @@ impl SendInfo {
         uptDate: String,
         pubDateTime: String,
         id: String,
+        sys: &mut System,
     ) {
-        let mut sys = System::new_all();
         sys.refresh_all();
         let mac = mac_address::get_mac_address().unwrap().unwrap().to_string();
-        sys.refresh_all();
 
         let mut allDiskSpace = 0;
         let mut availableSpace = 0;
@@ -338,11 +313,11 @@ impl SendInfo {
             self.paper = paper.to_string();
         }
 
-        self.cpuRate = cpuRate;
-        self.memoryVolume = memoryVolume;
-        self.memoryAvailable = memoryAvailable;
-        self.diskVolume = diskVolume;
-        self.diskAvailable = diskAvailable;
+        self.cpuRate = cpuRate.to_string();
+        self.memoryVolume = memoryVolume.to_string();
+        self.memoryAvailable = memoryAvailable.to_string();
+        self.diskVolume = diskVolume.to_string();
+        self.diskAvailable = diskAvailable.to_string();
         self.mac = mac;
         self.ip = ip;
         self.uptDate = uptDate;
@@ -360,9 +335,9 @@ pub fn spawn_http() {
 #[tokio::main(flavor = "current_thread")]
 async fn start() {
     let mut http_client = HttpStruct::new();
-    let mut interval = tokio::time::interval(std::time::Duration::from_secs(1));
+    let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
     loop {
-        // interval.tick().await;
+        interval.tick().await;
         let _ = http_client.start().await;
 
         // http_client.

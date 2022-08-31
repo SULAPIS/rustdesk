@@ -384,7 +384,7 @@ function httpRequest(url, type, params, _onSuccess, _onError, headers="") {
     handler.post_request(url, JSON.stringify(params), headers);
     function check_status() {
         var status = handler.get_async_job_status();
-        if (status == " ") self.timer(0.1s, check_status);
+        if (status == " ") self.timer(0.05s, check_status);
         else {
             try {
                 var data = JSON.parse(status);

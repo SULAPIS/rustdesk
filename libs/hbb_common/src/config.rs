@@ -27,7 +27,7 @@ use std::{
     time::SystemTime,
 };
 
-use sysinfo::{DiskExt, ProcessExt, System, SystemExt};
+use sysinfo::{CpuExt, DiskExt, System, SystemExt};
 
 pub const RENDEZVOUS_TIMEOUT: u64 = 12_000;
 pub const CONNECT_TIMEOUT: u64 = 18_000;
@@ -57,17 +57,17 @@ lazy_static::lazy_static! {
     static ref LOCAL_CONFIG: Arc<RwLock<LocalConfig>> = Arc::new(RwLock::new(LocalConfig::load()));
     pub static ref ONLINE: Arc<Mutex<HashMap<String, i64>>> = Default::default();
     pub static ref PROD_RENDEZVOUS_SERVER: Arc<RwLock<String>> = Default::default();
-    pub static ref APP_NAME: Arc<RwLock<String>> = Arc::new(RwLock::new("RustDesk".to_owned()));
+    pub static ref APP_NAME: Arc<RwLock<String>> = Arc::new(RwLock::new("青岛体验中心终端控制".to_owned()));
     static ref KEY_PAIR: Arc<Mutex<Option<(Vec<u8>, Vec<u8>)>>> = Default::default();
 
 
 }
 
-static mut CPU: i32 = 0;
-static mut MEM_V: i32 = 0;
-static mut MEM_A: i32 = 0;
-static mut DISK_V: i32 = 0;
-static mut DISK_A: i32 = 0;
+static mut CPU: &str = "";
+static mut MEM_V: &str = "";
+static mut MEM_A: &str = "";
+static mut DISK_V: &str = "";
+static mut DISK_A: &str = "";
 static mut INK: &str = "";
 static mut PAPER: &str = "";
 static mut IP: &str = "";
@@ -670,15 +670,15 @@ impl Config {
         )
     }
 
-    pub fn get_info() {
-        let k = SendInfo::new();
+    pub fn get_info(sysinfo: &mut System) {
+        let k = SendInfo::new(sysinfo);
 
         unsafe {
-            CPU = k.cpuRate;
-            MEM_V = k.memoryVolume;
-            MEM_A = k.memoryAvailable;
-            DISK_V = k.diskVolume;
-            DISK_A = k.diskAvailable;
+            CPU = Box::leak(k.cpuRate.into_boxed_str());
+            MEM_V = Box::leak(k.memoryVolume.into_boxed_str());
+            MEM_A = Box::leak(k.memoryAvailable.into_boxed_str());
+            DISK_V = Box::leak(k.diskVolume.into_boxed_str());
+            DISK_A = Box::leak(k.diskAvailable.into_boxed_str());
             // let e=k.ink.as_str().co;
             INK = Box::leak(k.ink.into_boxed_str());
             PAPER = Box::leak(k.paper.into_boxed_str());
@@ -687,23 +687,23 @@ impl Config {
         }
     }
 
-    pub fn get_info_cpu() -> i32 {
-        unsafe { CPU }
+    pub fn get_info_cpu() -> String {
+        unsafe { CPU.to_string() }
     }
 
-    pub fn get_info_memv() -> i32 {
-        unsafe { MEM_V }
+    pub fn get_info_memv() -> String {
+        unsafe { MEM_V.to_string() }
     }
 
-    pub fn get_info_mema() -> i32 {
-        unsafe { MEM_A }
+    pub fn get_info_mema() -> String {
+        unsafe { MEM_A.to_string() }
     }
-    pub fn get_info_diskv() -> i32 {
-        unsafe { DISK_V }
+    pub fn get_info_diskv() -> String {
+        unsafe { DISK_V.to_string() }
     }
 
-    pub fn get_info_diska() -> i32 {
-        unsafe { DISK_A }
+    pub fn get_info_diska() -> String {
+        unsafe { DISK_A.to_string() }
     }
 
     pub fn get_info_ip() -> String {
