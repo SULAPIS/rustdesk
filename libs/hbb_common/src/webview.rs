@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use std::ops::Deref;
+use std::{collections::HashMap, sync::mpsc::Receiver};
 use wry::{
     application::{
         event::{DeviceEvent, ElementState, Event, KeyEvent, RawKeyEvent, WindowEvent},
@@ -17,8 +17,8 @@ enum UserEvents {
     NewWindow(),
 }
 
-pub fn spawn_webview(url: String) {
-    std::thread::spawn(move || start(url));
+pub fn spawn_webview(url: String, rx: Receiver<(i32, i32)>) {
+    std::thread::spawn(move || start(url, rx));
 }
 
 fn create_new_window(
@@ -30,7 +30,7 @@ fn create_new_window(
 ) -> (WindowId, WebView) {
     let window = WindowBuilder::new()
         .with_decorations(false)
-        .with_fullscreen(Some(Fullscreen::Borderless(None)))
+        .with_always_on_top(true)
         .build(event_loop)
         .unwrap();
     let window_id = window.id();
@@ -79,7 +79,7 @@ fn create_new_window(
 // }
 
 #[tokio::main(flavor = "current_thread")]
-async fn start(url: String) {
+async fn start(url: String, rx: Receiver<(i32, i32)>) {
     let event_loop = EventLoop::<UserEvents>::new_any_thread();
 
     let mut webviews = HashMap::new();
@@ -93,23 +93,20 @@ async fn start(url: String) {
         &url,
     );
 
-    webviews.insert(new_window.0, new_window.1);
-
-    //  let out_event_loop: EventLoopExtWindows<()> = EventLoopExtWindows::new_any_thread();
-
-    // let window = WindowBuilder::new()
-    //     .with_title("Hello World")
-    //     .build(&event_loop)
-    //     .unwrap();
-    // let _webview = WebViewBuilder::new(window)
-    //     .unwrap()
-    //     .with_url("http://114.115.156.246:9110/")
-    //     .unwrap()
-    //     .build()
-    //     .unwrap();
-
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Wait;
+        let window = new_window.1.window();
+        let mut pos = window.outer_position().unwrap();
+        let rec = rx.try_recv();
+        match rec {
+            Ok((x, y)) => {
+                println!("x: {},y: {}", x, y);
+                pos.x = x + 80;
+                pos.y = y + 58;
+                window.set_outer_position(pos);
+            }
+            Err(e) => {}
+        }
 
         // match event {
         //     Event::NewEvents(StartCause::Init) => println!("Wry has started!"),

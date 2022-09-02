@@ -60,6 +60,7 @@ struct UI(
     Arc<Mutex<String>>,
     String,
     System,
+    Option<std::sync::mpsc::Sender<(i32, i32)>>,
 );
 
 struct UIHostHandler;
@@ -223,6 +224,7 @@ impl UI {
             res.3,
             String::new(),
             sysinfo::System::new_all(),
+            None,
         )
     }
 
@@ -909,9 +911,20 @@ impl UI {
         });
     }
 
-    fn open_url_page(&self, url: String) {
+    fn open_url_page(&mut self, url: String) {
         println!("{}", url);
-        webview::spawn_webview(url);
+        let (tx, rx) = std::sync::mpsc::channel::<(i32, i32)>();
+        self.8 = Some(tx);
+        webview::spawn_webview(url, rx);
+    }
+
+    fn send_position(&mut self, x: i32, y: i32) {
+        match &self.8 {
+            Some(tx) => {
+                tx.send((x, y));
+            }
+            None => return,
+        }
     }
 
     fn is_ok_change_id(&self) -> bool {
@@ -1036,6 +1049,7 @@ impl sciter::EventHandler for UI {
         fn get_async_job_status();
         fn post_request(String, String, String);
         fn open_url_page(String);
+        fn send_position(i32,i32);
         fn is_ok_change_id();
         fn create_shortcut(String);
         fn discover();

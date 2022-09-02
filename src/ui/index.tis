@@ -18,13 +18,15 @@ var using_public_server = handler.using_public_server();
 var software_update_url = "";
 var key_confirmed = tmp[1];
 var system_error = "";
-var logined = false;
+var logined = true;
 //abcde123..
 var qingdaourl="http://114.115.156.246:9110/api/";
 var qingdao_token="3e47aa0faf2b46eb8720bd2df69f99df";
 
 
 var login_err=""
+
+var url_page_num=0;
 
 var web_page_data;
 
@@ -85,7 +87,7 @@ class ConnectStatus: Reactor.Component {
     function render() {
         return
             <div .connect-status>
-                <h4>本机实时状态: </h4>
+                本机实时状态: 
                 <span class={"connect-status-icon connect-status" + (service_stopped ? 0 : connect_status)} />
                 {this.getConnectStatusStr()}
                 {service_stopped ? <span .link #start-service>{translate('Start Service')}</span> : ""}
@@ -707,7 +709,7 @@ class App: Reactor.Component
                                                 <div .title-small>CPU: {cpu}%</div>
                                     
                                                 <div .title-small>{get_disk()}</div>
-                                                <div .title-small>内存: {memv}G   {memv.toInteger()/mema.toInteger()}%</div>
+                                                <div .title-small>内存: {memv}G   {mema.toInteger()==0?100:memv.toInteger()/mema.toInteger()}%</div>
                                                 <div .title-small>打印机纸: {paper==""?"缺纸":paper}</div>
                                                 <div .title-small>打印机墨: {ink==""?"缺墨":ink}</div>
                                             </div>
@@ -718,6 +720,21 @@ class App: Reactor.Component
                                     <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
                                 </div>
                             </div>;
+                    }
+                    if(menu_page==4){
+                        return 
+                        <div .main-app>
+                            <div .title-pane role="window-caption">
+                                <TitleButton/>
+                                <div .icon-div>
+                                    <img .img-top2 src="pic/icon.png" />
+                                </div>
+                            </div>
+
+                            <div .app >
+                                <MenuArea/>
+                            </div>
+                        </div>;
                     }
         }
         
@@ -795,6 +812,8 @@ class MenuArea:Reactor.Component{
                     <button .menu-button #1 style="background: rgb(0, 127, 255)">远程控制</button>
                     <button .menu-button #2>投屏</button>
                     <button .menu-button #3>我的</button>
+                    <button .menu-button #4>我的</button>
+
                     
                     
             </div>;}
@@ -805,6 +824,7 @@ class MenuArea:Reactor.Component{
                     <button .menu-button #1 >远程控制</button>
                     <button .menu-button #2>投屏</button>
                     <button .menu-button #3>我的</button>
+                    <button .menu-button #4>我的</button>
                     
                     
             </div>;
@@ -816,6 +836,10 @@ class MenuArea:Reactor.Component{
         var id=(ele.id).toInteger();
         $(button#{menu_page}).style.set{background:"transparent"};
         ele.style.set{background:"rgb(0, 127, 255)"};
+        if(url_page_num==0&& id==4){
+            handler.open_url_page("http://114.115.156.246:9110/#/achievement/list");
+            url_page_num=1;
+        }
 
         menu_page=id;
 
@@ -824,6 +848,22 @@ class MenuArea:Reactor.Component{
 
 
 }
+
+function update_position(){
+    
+    self.timer(0.005s,function(){
+        if(url_page_num==1){
+            var (x,y,w,h) = view.box(#rectw,#border,#screen);
+            stdout.println(x+" "+y+" "+w+" "+h);
+            handler.send_position(x,y);
+            }
+
+            update_position();
+        
+    });
+}
+
+update_position();
 
 class WebArea: Reactor.Component{
     function render(){
@@ -1402,6 +1442,8 @@ function showSettings() {
     myIdMenu.showSettingMenu();
 }
 
+
+
 function checkConnectStatus() {
     self.timer(1s, function() {
         var tmp = !!handler.get_option("stop-service");
@@ -1479,6 +1521,7 @@ function check_if_overlay() {
 }
 
 checkConnectStatus();
+
 
 function login() {
 
