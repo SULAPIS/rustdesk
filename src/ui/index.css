@@ -586,7 +586,7 @@ li:disabled:hover {
 
 .title-buttons {
     width: *;
-    height: 4em;
+    height: *;
     flow: horizontal;
     float: right;
     background: transparent;
@@ -631,7 +631,7 @@ li:disabled:hover {
 }
 
 .title-pane {
-    height: 3.6em;
+    height: 4em;
     width: *;
     background-image: url(./pic/head3.png);
     background-size: cover;

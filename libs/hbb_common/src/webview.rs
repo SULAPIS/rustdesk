@@ -17,7 +17,7 @@ enum UserEvents {
     NewWindow(),
 }
 
-pub fn spawn_webview(url: String, rx: Receiver<(i32, i32)>) {
+pub fn spawn_webview(url: String, rx: Receiver<(i32, i32, i32, i32, i32)>) {
     std::thread::spawn(move || start(url, rx));
 }
 
@@ -30,6 +30,7 @@ fn create_new_window(
 ) -> (WindowId, WebView) {
     let window = WindowBuilder::new()
         .with_decorations(false)
+        .with_resizable(false)
         .with_always_on_top(true)
         .build(event_loop)
         .unwrap();
@@ -79,7 +80,7 @@ fn create_new_window(
 // }
 
 #[tokio::main(flavor = "current_thread")]
-async fn start(url: String, rx: Receiver<(i32, i32)>) {
+async fn start(url: String, rx: Receiver<(i32, i32, i32, i32, i32)>) {
     let event_loop = EventLoop::<UserEvents>::new_any_thread();
 
     let mut webviews = HashMap::new();
@@ -94,20 +95,44 @@ async fn start(url: String, rx: Receiver<(i32, i32)>) {
     );
 
     event_loop.run(move |event, event_loop, control_flow| {
-        *control_flow = ControlFlow::Wait;
-        let window = new_window.1.window();
-        let mut pos = window.outer_position().unwrap();
         let rec = rx.try_recv();
         match rec {
-            Ok((x, y)) => {
-                println!("x: {},y: {}", x, y);
-                pos.x = x + 80;
-                pos.y = y + 58;
-                window.set_outer_position(pos);
-            }
+            Ok((event, x, y, w, h)) => match event {
+                0 => {
+                    let window = new_window.1.window();
+                    let mut pos = window.outer_position().unwrap();
+                    pos.x = x + 126;
+                    pos.y = y + 111;
+                    window.set_outer_position(pos);
+                    let mut size = window.inner_size();
+                    size.width = (w - 169) as _;
+                    size.height = (h - 154) as _;
+
+                    window.set_inner_size(size);
+                }
+                1 => {
+                    let window = new_window.1.window();
+                    window.set_always_on_top(false);
+                }
+                3 => {
+                    let window = new_window.1.window();
+                    window.set_always_on_top(true);
+                }
+                4 => {
+                    let window = new_window.1.window();
+                    window.set_visible(false);
+                    return;
+                }
+                5 => {
+                    let window = new_window.1.window();
+                    window.set_visible(true);
+                    return;
+                }
+                _ => {}
+            },
             Err(e) => {}
         }
-
+        *control_flow = ControlFlow::Wait;
         // match event {
         //     Event::NewEvents(StartCause::Init) => println!("Wry has started!"),
         //     Event::WindowEvent {

@@ -3,10 +3,11 @@ stdout.println("current platform:", OS);
 stdout.println("is_xfce: ", is_xfce);
 
 // // html min-width, min-height not working on mac, below works for all
+
 view.windowMinSize = (scaleIt(600), scaleIt(500));
+
 // view.windowMaxSize = (scaleIt(600), scaleIt(300));
 // view.move()
-// view.windowState = View.WINDOW_MAXIMIZED;
 
 var app;
 var menu_but;
@@ -18,7 +19,8 @@ var using_public_server = handler.using_public_server();
 var software_update_url = "";
 var key_confirmed = tmp[1];
 var system_error = "";
-var logined = true;
+var logined = false;
+var is_url_page=false;
 //abcde123..
 var qingdaourl="http://114.115.156.246:9110/api/";
 var qingdao_token="3e47aa0faf2b46eb8720bd2df69f99df";
@@ -30,8 +32,8 @@ var url_page_num=0;
 
 var web_page_data;
 
-var ruser_name = "";
-var ruser_password = "";
+var ruser_name = "admin";
+var ruser_password = "abcde123..";
 
 var svg_menu = <svg #menu viewBox="0 0 512 512">
 	<circle cx="256" cy="256" r="64"/>
@@ -568,11 +570,14 @@ function editDirectAccessPort() {
       });
 }
 
+
+
 class App: Reactor.Component
 {
     function this() {
         app = this;
         view.windowState = View.WINDOW_MAXIMIZED;
+        view.windowTopmost=true;
             
 
     }
@@ -581,117 +586,39 @@ class App: Reactor.Component
         var is_can_screen_recording = handler.is_can_screen_recording(false);
          get_info();
         if (logined==false){
-            return <div .main-user role="window-caption">
-                            
-                        <div .main-title role="window-caption">
-                            <TitleButton/>
-
-                            <div .icon-div>
-                                <img .img-top src="pic/title.png" />
-                            </div>
-
-                            
-
-                        </div>
-                        <div .main-main>
-                                
-                            <img .img-center src="pic/body.png" />
-
-
-                            <div .main-right>
-                                <h1 .welcome>欢迎登录系统</h1>
-                                <input .input-user #input_user value="" placeholder="用户名"/>
-                                <input .input-user #input_pass value="" placeholder="密码"/>
-                                
-                                
-                                <button .main-button #user-login>登录</button>
-                                <h3 .login-err >{login_err}</h3>
-                                
-
-                            </div>
-
-                        </div>
-
-                        
-
-                            
+            return <div style="size:*;background: #ffff;">
+                    <LoginPage/>
                     </div>;
 
         }else{
-           
-
-
                     if (menu_page==1){
                         return
-
                         <div .main-app>
-                            
-                             <div .title-pane role="window-caption">
-                                <TitleButton/>
-                                <div .icon-div>
-                                    <img .img-top2 src="pic/icon.png" />
-                                </div>
-                            </div>
-
+                            <TitleArea/>
                             <div .app>
-
                                 <MenuArea/>
-                            
-                   
-               
-   
-                                <div .right-pane>
-                                    <div .right-content>
-                                        <div .card-connect>
-                                            <div .title>{translate('Control Remote Desktop')}</div>
-                                            <ID @{this.remote_id} />
-                                            <div .right-buttons>
-                                                <button .button .outline #file-transfer>{translate('Transfer File')}</button>
-                                                <button .button #connect>{translate('Connect')}</button>
-                                            </div>
-                                        </div>
-                                        <MultipleSessions @{this.multipleSessions} />
-                                    </div>
-                                </div>
-                                <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
+                                <RemotePage/>
                             </div>
+                            <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
                         </div>;
                     }
                     if (menu_page==2){
                         return
-
                         <div .main-app>
-                            <div .title-pane role="window-caption">
-                                <TitleButton/>
-                                <div .icon-div>
-                                    <img .img-top2 src="pic/icon.png" />
-                                </div>
-                            </div>
-
+                            <TitleArea/>
                             <div .app >
                                 <MenuArea/>
-                                <WebArea/>
+                                <WebPage/>
                             </div>
+                            <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
                         </div>;
                     }
                     if (menu_page==3){
                         return 
                             <div .main-app>
-                                
-                                <div .title-pane role="window-caption">
-                                    <TitleButton/>
-                                    <div .icon-div>
-                                        <img .img-top2 src="pic/icon.png" />
-                                    </div>
-
-                                    
-                                </div>
-
+                                <TitleArea/>
                                 <div .app>
-
                                     <MenuArea/>
-                                
-                                
                                         <div .left-pane>
                                             <div>
                                                 <div .title>{translate('Your Desktop')}</div>
@@ -699,7 +626,6 @@ class App: Reactor.Component
                                                 <div .your-desktop>
                                                     <MyIdMenu />
                                                     {key_confirmed ? <input type="text" readonly value={formatId(get_id())}/> : translate("Generating ...")}
-                                                    
                                                 </div>
                                                 <PasswordArea />
                                                 <ConnectStatus @{this.connect_status} />
@@ -717,23 +643,35 @@ class App: Reactor.Component
                                         </div>
                                         <div .right-pane>
                                         </div>
-                                    <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
+                                   
                                 </div>
+                                <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
                             </div>;
                     }
                     if(menu_page==4){
                         return 
                         <div .main-app>
-                            <div .title-pane role="window-caption">
-                                <TitleButton/>
-                                <div .icon-div>
-                                    <img .img-top2 src="pic/icon.png" />
-                                </div>
-                            </div>
+                            <TitleArea/>
 
                             <div .app >
                                 <MenuArea/>
-                            </div>
+                                <div style="size:*;background:transparent;flow:horizontal">
+                                    <div style="height:*;width:34px; background:#ffff;"></div>
+                                    <div style="size:*;background:transparent;flow:vertical">
+                                        <div style="height:34px;width:*;background:#ffff;"></div>
+                                        <div style="size:*;background:transparent;flow:horizontal">
+                                            <div style="size:*;background:transparent;flow:vertical">
+                                                <div style="size:*;background:transparent;"></div>
+                                                <div style="height:34px;width:*;background:#ffff;"></div>
+                                            </div>
+                                            <div style="height:*;width:34px; background:#ffff;"></div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                              
+                            </div> 
+                             <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
                         </div>;
                     }
         }
@@ -742,16 +680,30 @@ class App: Reactor.Component
        
     }
 
-    event click $(button#connect) {
-        this.newRemote("connect");
-    }
-   
-
-    event click $(button#file-transfer) {
-        this.newRemote("file-transfer");
-    }
-
     
+}
+
+class LoginPage: Reactor.Component {
+    function render(){
+        return <div .main-user role="window-caption">
+                        <div .main-title role="window-caption">
+                            <TitleButton/>
+                            <div .icon-div>
+                                <img .img-top src="pic/title.png" />
+                            </div>
+                        </div>
+                        <div .main-main>
+                            <img .img-center src="pic/body.png" />
+                            <div .main-right>
+                                <h1 .welcome>欢迎登录系统</h1>
+                                <input .input-user #input_user value="admin" placeholder="用户名"/>
+                                <input .input-user #input_pass value="abcde123.." placeholder="密码"/>
+                                <button .main-button #user-login>登录</button>
+                                <h3 .login-err >{login_err}</h3>
+                            </div>
+                        </div>
+                    </div>;
+    }
     event click $(button#user-login) {
         
        qingdao_token= handler.user_login(ruser_name,ruser_password);
@@ -766,23 +718,38 @@ class App: Reactor.Component
        }
         app.update();
         if(logined==true){
-            if(!web_page_data){
-            httpRequest(qingdaourl + "sys/list", #post, {token:qingdao_token}, function(data) {
-                if (data.error) {
+            httpRequest(qingdaourl+"rolefunction/getauthoritymenus",#post,"{categoryID: '323232', orderByField: 'sequenceNo'}",function(data){
+                 stdout.println(data);
+                if(data.error){
                     handleAbError(data.error);
+                   stdout.println(data.error);
                     return;
                 }
-                var t =JSON.stringify(data);
+                var t=JSON.stringify(data);
+                stdout.println(t);
                 var res=JSON.parse(t).data;
+                stdout.println(res);
+        },function(err,status){}, "token:"+qingdao_token);
+
+        stdout.println("webpage");
+
+    //         if(!web_page_data){
+    //         httpRequest(qingdaourl + "sys/list", #post, {token:qingdao_token}, function(data) {
+    //             if (data.error) {
+    //                 handleAbError(data.error);
+    //                 return;
+    //             }
+    //             var t =JSON.stringify(data);
+    //             var res=JSON.parse(t).data;
                 
-                web_page_data=res;
+    //             web_page_data=res;
 
 
-                }, function(err, status) {
-                }, getHttpHeaders());
+    //             }, function(err, status) {
+    //             });
 
 
-       }
+    //    }
         }
     }
     event change $(input#input_user){
@@ -797,9 +764,33 @@ class App: Reactor.Component
         app.update();
     }
 
-    function newRemote(type) {
-        createNewConnect(this.remote_id.value, type);
+}
+
+class RemotePage: Reactor.Component {
+    function render(){
+        return <div .right-pane>
+                    <div .right-content>
+                        <div .card-connect>
+                            <div .title>{translate('Control Remote Desktop')}</div>
+                            <ID @{app.remote_id} />
+                            <div .right-buttons>
+                                <button .button .outline #file-transfer>{translate('Transfer File')}</button>
+                                <button .button #connect>{translate('Connect')}</button>
+                            </div>
+                        </div>
+                        <MultipleSessions @{app.multipleSessions} />
+                    </div>
+                </div>;
     }
+    event click $(button#connect) {
+            this.newRemote("connect");
+        }
+        event click $(button#file-transfer) {
+            this.newRemote("file-transfer");
+        }
+        function newRemote(type) {
+            createNewConnect(this.remote_id.value, type);
+        }
 }
 
 
@@ -836,36 +827,56 @@ class MenuArea:Reactor.Component{
         var id=(ele.id).toInteger();
         $(button#{menu_page}).style.set{background:"transparent"};
         ele.style.set{background:"rgb(0, 127, 255)"};
-        if(url_page_num==0&& id==4){
-            handler.open_url_page("http://114.115.156.246:9110/#/achievement/list");
-            url_page_num=1;
-        }
+       
 
         menu_page=id;
 
         app.update();
+         if(id==4){
+            is_url_page=true;
+            if(url_page_num==0){
+                handler.open_url_page("http://114.115.156.246:9110/#/sys/list?menu=false&head=false&tab=false");
+                url_page_num=1;
+            }
+            
+            handler.send_event(5,0,0,0,0);
+        }else{
+            is_url_page=false;
+            handler.send_event(4,0,0,0,0);
+        }
     }
 
 
 }
 
-function update_position(){
+function update_event(){
     
-    self.timer(0.005s,function(){
-        if(url_page_num==1){
+    self.timer(0.001s,function(){
+        if(is_url_page){
             var (x,y,w,h) = view.box(#rectw,#border,#screen);
-            stdout.println(x+" "+y+" "+w+" "+h);
-            handler.send_position(x,y);
+            
+
+            
+            handler.send_event(0,x,y,w,h);
             }
 
-            update_position();
+            update_event();
         
     });
 }
+update_event();
 
-update_position();
+function set_url_page_top(){
+    self.timer(0.1s,function(){
+        if(url_page_num==1){
+            var (x,y)=view.cursorLocation();
+        }
+        set_url_page_top();
+    });
+}
 
-class WebArea: Reactor.Component{
+
+class WebPage: Reactor.Component{
     function render(){
        if(!web_page_data){
         return;
@@ -927,7 +938,16 @@ class WebArea: Reactor.Component{
     }
 }
 
-
+class TitleArea: Reactor.Component {
+    function render(){
+        return <div .title-pane role="window-caption">
+                                <TitleButton/>
+                                <div .icon-div>
+                                    <img .img-top2 src="pic/icon.png" />
+                                </div>
+                            </div>;
+    }
+}
 
 class TitleButton:Reactor.Component{
     function render(){
@@ -1411,6 +1431,7 @@ $(body).content(<div style="size:*"><App /><div #msgbox /></div>);
 function self.closing() {
     var (x, y, w, h) = view.box(#rectw, #border, #screen);
     handler.closing(x, y, w, h);
+    
     return true;
 }
 
@@ -1495,7 +1516,8 @@ function checkConnectStatus() {
 }                                
                                  
 var enter = false;               
-function self.onMouse(evt) {     
+function self.onMouse(evt) {
+    
     switch(evt.type) {           
     case Event.MOUSE_ENTER:    
         enter = true;
@@ -1521,7 +1543,7 @@ function check_if_overlay() {
 }
 
 checkConnectStatus();
-
+view.windowState = View.WINDOW_MAXIMIZED;
 
 function login() {
 

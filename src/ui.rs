@@ -60,7 +60,7 @@ struct UI(
     Arc<Mutex<String>>,
     String,
     System,
-    Option<std::sync::mpsc::Sender<(i32, i32)>>,
+    Option<std::sync::mpsc::Sender<(i32, i32, i32, i32, i32)>>,
 );
 
 struct UIHostHandler;
@@ -122,7 +122,8 @@ pub fn start(args: &mut [String]) {
     //     sciter::window::SCITER_CREATE_WINDOW_FLAGS::SW_MAIN,
     //     None,
     // );
-    let mut frame = sciter::WindowBuilder::main_window().create();
+    let mut frame = sciter::WindowBuilder::main_window().alpha().create();
+
     #[cfg(windows)]
     allow_err!(sciter::set_options(sciter::RuntimeOptions::UxTheming(true)));
     frame.set_title(&crate::get_app_name());
@@ -901,6 +902,8 @@ impl UI {
     }
 
     fn post_request(&self, url: String, body: String, header: String) {
+        println!("{}", header);
+        println!("{}", body);
         let status = self.3.clone();
         *status.lock().unwrap() = " ".to_owned();
         std::thread::spawn(move || {
@@ -912,16 +915,15 @@ impl UI {
     }
 
     fn open_url_page(&mut self, url: String) {
-        println!("{}", url);
-        let (tx, rx) = std::sync::mpsc::channel::<(i32, i32)>();
+        let (tx, rx) = std::sync::mpsc::channel::<(i32, i32, i32, i32, i32)>();
         self.8 = Some(tx);
         webview::spawn_webview(url, rx);
     }
 
-    fn send_position(&mut self, x: i32, y: i32) {
+    fn send_event(&mut self, event: i32, x: i32, y: i32, w: i32, h: i32) {
         match &self.8 {
             Some(tx) => {
-                tx.send((x, y));
+                tx.send((event, x, y, w, h));
             }
             None => return,
         }
@@ -1049,7 +1051,7 @@ impl sciter::EventHandler for UI {
         fn get_async_job_status();
         fn post_request(String, String, String);
         fn open_url_page(String);
-        fn send_position(i32,i32);
+        fn send_event(i32,i32,i32,i32,i32);
         fn is_ok_change_id();
         fn create_shortcut(String);
         fn discover();
