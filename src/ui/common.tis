@@ -379,6 +379,7 @@ class PasswordComponent: Reactor.Component {
 // type: #post, #get, #delete, #put
 function httpRequest(url, type, params, _onSuccess, _onError, headers="") {
     stdout.println(headers);
+    stdout.println(params);
     if (type != #post) {
         stderr.println("only post ok");
     }

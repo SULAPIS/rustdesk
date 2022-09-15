@@ -60,7 +60,7 @@ struct UI(
     Arc<Mutex<String>>,
     String,
     System,
-    Option<std::sync::mpsc::Sender<(i32, i32, i32, i32, i32)>>,
+    Option<std::sync::mpsc::Sender<(i32, i32, i32, i32, i32, String)>>,
 );
 
 struct UIHostHandler;
@@ -902,8 +902,8 @@ impl UI {
     }
 
     fn post_request(&self, url: String, body: String, header: String) {
-        println!("{}", header);
-        println!("{}", body);
+        println!("header {}", header);
+        println!("body {}", body);
         let status = self.3.clone();
         *status.lock().unwrap() = " ".to_owned();
         std::thread::spawn(move || {
@@ -914,16 +914,16 @@ impl UI {
         });
     }
 
-    fn open_url_page(&mut self, url: String) {
-        let (tx, rx) = std::sync::mpsc::channel::<(i32, i32, i32, i32, i32)>();
+    fn open_url_page(&mut self) {
+        let (tx, rx) = std::sync::mpsc::channel::<(i32, i32, i32, i32, i32, String)>();
         self.8 = Some(tx);
-        webview::spawn_webview(url, rx);
+        webview::spawn_webview(rx);
     }
 
-    fn send_event(&mut self, event: i32, x: i32, y: i32, w: i32, h: i32) {
+    fn send_event(&mut self, event: i32, x: i32, y: i32, w: i32, h: i32, url: String) {
         match &self.8 {
             Some(tx) => {
-                tx.send((event, x, y, w, h));
+                tx.send((event, x, y, w, h, url));
             }
             None => return,
         }
@@ -1050,8 +1050,8 @@ impl sciter::EventHandler for UI {
         fn change_id(String);
         fn get_async_job_status();
         fn post_request(String, String, String);
-        fn open_url_page(String);
-        fn send_event(i32,i32,i32,i32,i32);
+        fn open_url_page();
+        fn send_event(i32,i32,i32,i32,i32,String);
         fn is_ok_change_id();
         fn create_shortcut(String);
         fn discover();

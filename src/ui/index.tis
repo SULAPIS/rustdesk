@@ -4,7 +4,7 @@ stdout.println("is_xfce: ", is_xfce);
 
 // // html min-width, min-height not working on mac, below works for all
 
-view.windowMinSize = (scaleIt(600), scaleIt(500));
+view.windowMinSize = (scaleIt(500), scaleIt(436));
 
 // view.windowMaxSize = (scaleIt(600), scaleIt(300));
 // view.move()
@@ -21,6 +21,16 @@ var key_confirmed = tmp[1];
 var system_error = "";
 var logined = false;
 var is_url_page=false;
+var page_name=[];
+var page_icon=[];
+var page_url=[];
+var page_num=[];
+var page_obj;
+var last_id=0;
+var menu_json;
+var multi_menu_num=0;
+var menu_num=0;
+
 //abcde123..
 var qingdaourl="http://114.115.156.246:9110/api/";
 var qingdao_token="3e47aa0faf2b46eb8720bd2df69f99df";
@@ -33,7 +43,7 @@ var url_page_num=0;
 var web_page_data;
 
 var ruser_name = "admin";
-var ruser_password = "abcde123..";
+var ruser_password = "abcd1234!!";
 
 var svg_menu = <svg #menu viewBox="0 0 512 512">
 	<circle cx="256" cy="256" r="64"/>
@@ -41,9 +51,8 @@ var svg_menu = <svg #menu viewBox="0 0 512 512">
 	<circle cx="256" cy="64" r="64"/>
 </svg>;
 var svg_refresh_password = <svg #refresh-password xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38"/></svg>;
-
 var my_id = "";
-var menu_page=1;
+var menu_page=0;
 
 var cpu;
 var memv;
@@ -55,6 +64,7 @@ var mac;
 var paper;
 var ink;
 
+// var menu_json=JSON.parse("{data:[{name:"我的",url:"",children:[]},{name:"投屏",url:"",children:[]},{name:"远程协助",url:"","children":[]},{name:"应用","url":"","children":[{"name":"合同管理","url":"http://baidu.com","children":[]},{"name":"项目管理","url":"项目管理","children":[{"name":"合同管理","url":"http://baidu.com","children":[]}]}]}]}');
 
 function get_id() {
   my_id = handler.get_id();
@@ -81,6 +91,31 @@ function get_info(){
 
 
 
+}
+
+function create_url_page(i,url){
+    handler.send_event(1,i,0,0,0,url);
+    
+}
+function visible_true_page(i){
+    handler.send_event(2,i,0,0,0,"");
+}
+
+function visible_false_page(){
+    handler.send_event(3,0,0,0,0,"");
+}
+
+function fullsize_page(url){
+    handler.send_event(4,0,0,0,0,url);
+}
+function visible_true_pagee(){
+    handler.send_event(5,0,0,0,0,"");
+}
+function visible_false_pagee(){
+    handler.send_event(6,0,0,0,0,"");
+}
+function send_web_position1(x,y,w,h){
+    handler.send_event(7,x,y,w,h,"");
 }
 
 var my_info=handler.get_info();
@@ -591,7 +626,7 @@ class App: Reactor.Component
                     </div>;
 
         }else{
-                    if (menu_page==1){
+                    if (menu_page==0){
                         return
                         <div .main-app>
                             <TitleArea/>
@@ -602,7 +637,7 @@ class App: Reactor.Component
                             <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
                         </div>;
                     }
-                    if (menu_page==2){
+                    if (menu_page==1){
                         return
                         <div .main-app>
                             <TitleArea/>
@@ -613,7 +648,7 @@ class App: Reactor.Component
                             <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
                         </div>;
                     }
-                    if (menu_page==3){
+                    if (menu_page==2){
                         return 
                             <div .main-app>
                                 <TitleArea/>
@@ -642,33 +677,43 @@ class App: Reactor.Component
                                             
                                         </div>
                                         <div .right-pane>
+                                        
                                         </div>
                                    
                                 </div>
                                 <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
                             </div>;
                     }
-                    if(menu_page==4){
+                    if(menu_page==3){
                         return 
                         <div .main-app>
                             <TitleArea/>
-
+                            
                             <div .app >
                                 <MenuArea/>
-                                <div style="size:*;background:transparent;flow:horizontal">
-                                    <div style="height:*;width:34px; background:#ffff;"></div>
-                                    <div style="size:*;background:transparent;flow:vertical">
-                                        <div style="height:34px;width:*;background:#ffff;"></div>
-                                        <div style="size:*;background:transparent;flow:horizontal">
-                                            <div style="size:*;background:transparent;flow:vertical">
-                                                <div style="size:*;background:transparent;"></div>
-                                                <div style="height:34px;width:*;background:#ffff;"></div>
-                                            </div>
-                                            <div style="height:*;width:34px; background:#ffff;"></div>
-                                        </div>
-                                    </div>
-                                    
+                                <div .multi-stage>
+                                    <Multistage obj={menu_json[3].children} num_id={0} layer={0}/>
                                 </div>
+
+                                <BorderMargin/>
+                              
+                            </div> 
+                             <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
+                        </div>;
+                    }
+                    if(menu_page==4){
+                        return
+                        <div .main-app>
+                            <TitleArea/>
+                            
+                            <div .app >
+                                <MenuArea/>
+                                <div .left-pane>
+                                    <Screenshot/>
+                                </div>
+                                <div .right-pane>
+                                </div>
+
                               
                             </div> 
                              <div #overlay style="position: absolute;size:*;background:black;opacity:0.5;display:none" />
@@ -682,6 +727,33 @@ class App: Reactor.Component
 
     
 }
+
+class BorderMargin: Reactor.Component {
+  
+
+
+    function render(){
+        return <div style="size:*;background:transparent;flow:vertical">
+                    <div style="height:56px;width:*; background:#f0f0f0;flow:vertical">
+                        <div style="height:44px;width:*;background:#ffff;box-shadow: 3px 2px 3px rgba(0,0,0,0.3);">
+                            <MiniMenu/>
+                        </div>
+                    </div>
+                    <div style="size:*;background:transparent;flow:horizontal">
+                        <div style="height:*;width:27px; background:#ffff;"></div>
+                        <div #position1 style="size:*;background:transparent;"></div>
+                        <div style="height:*;width:27px; background:#ffff;"></div>
+                    </div>
+                    <div style="height:27px;width:*;background:transparent; flow:horizontal">
+                        <div style="height:*;width:*;background:#ffff;"></div>
+                        <div #position2 style="height:*;width:27px;background:rgba(255,255,255,1)"></div>
+                    </div>
+                    
+                </div>;
+    }
+}
+
+var menu_buttons;
 
 class LoginPage: Reactor.Component {
     function render(){
@@ -697,7 +769,7 @@ class LoginPage: Reactor.Component {
                             <div .main-right>
                                 <h1 .welcome>欢迎登录系统</h1>
                                 <input .input-user #input_user value="admin" placeholder="用户名"/>
-                                <input .input-user #input_pass value="abcde123.." placeholder="密码"/>
+                                <input .input-user #input_pass value="abcd1234!!" placeholder="密码"/>
                                 <button .main-button #user-login>登录</button>
                                 <h3 .login-err >{login_err}</h3>
                             </div>
@@ -716,10 +788,11 @@ class LoginPage: Reactor.Component {
        if(logined==false){
             login_err="用户名或密码错误";
        }
-        app.update();
+        
         if(logined==true){
-            httpRequest(qingdaourl+"rolefunction/getauthoritymenus",#post,"{categoryID: '323232', orderByField: 'sequenceNo'}",function(data){
-                 stdout.println(data);
+            handler.open_url_page();
+            httpRequest(qingdaourl+"rolefunction/getauthoritymenus",#post,{categoryID: "323232", orderByField: "sequenceNo"},function(data){
+                 get_touping();
                 if(data.error){
                     handleAbError(data.error);
                    stdout.println(data.error);
@@ -728,30 +801,96 @@ class LoginPage: Reactor.Component {
                 var t=JSON.stringify(data);
                 stdout.println(t);
                 var res=JSON.parse(t).data;
-                stdout.println(res);
-        },function(err,status){}, "token:"+qingdao_token);
-
-        stdout.println("webpage");
-
-    //         if(!web_page_data){
-    //         httpRequest(qingdaourl + "sys/list", #post, {token:qingdao_token}, function(data) {
-    //             if (data.error) {
-    //                 handleAbError(data.error);
-    //                 return;
-    //             }
-    //             var t =JSON.stringify(data);
-    //             var res=JSON.parse(t).data;
+                page_obj=res;
+                stdout.println(res.length);
                 
-    //             web_page_data=res;
+                // var n=0;
+                // for(var k in res ){
+                //     if(k.title=="应用"){
+                //         for (var i in k.children){
+                //             page_name.push(i.title);
+                //             page_num.push(n);
+                //             create_url_page(n,i.page);
+                //             n++;
+                //         }
+                //         continue;
+                //     }
+                //     page_name.push(k.title);
+                //     page_num.push(n);
+                //     n++;
+                    
+                // }
+                
+                
+                // stdout.println(page_name);
+                //  if(page_name[0]=="我的"){
+                //     view.windowTopmost=false;
+                //     menu_page=2;
+                // }else if(page_name[0]=="远程控制"){
+                //     view.windowTopmost=false;
+                //     menu_page=0;
+                // }else if(page_name[0]=="投屏"){
+                //     view.windowTopmost=false;
+                //     menu_page=1;
+                // }else{
+                //     view.windowTopmost=true;
+                //     menu_page=3;
+                //     visible_true_page(0);
+                // }
+                // last_id=0;
+                // app.update();
 
 
-    //             }, function(err, status) {
-    //             });
+
+                
+                    
 
 
-    //    }
+
+            },function(err,status){}, "token: "+qingdao_token);
+
+        
+
+    
         }
+
+
+        var config = Stream.openFile(self.url("index.json"));
+            if(config)
+            {
+                // Load the contents of the file into a json object 
+                var jsonData = parseData(config);
+
+                if(jsonData){
+                    menu_json=jsonData.data;
+                        var name=menu_json[0].name;
+                        if(name=="mine"){
+                            menu_page=2;
+                        }else if(name=="remote"){
+                            menu_page=0;
+                        }else if(name=="reject"){
+                            menu_page=1;
+                        }else if(name="app"){
+                            menu_page=3;
+                        }else if(name="screenshot"){
+                            menu_page=4;
+                        }
+
+                    app.update();
+
+                }else{
+                stdout.println("No data");
+                }
+                config.close();
+            }
+                logined=true;
+                last_id=0;
+
+
+        app.update();
     }
+
+
     event change $(input#input_user){
         ruser_name=$(input#input_user).value;
         login_err="";
@@ -765,6 +904,145 @@ class LoginPage: Reactor.Component {
     }
 
 }
+var menu_name={};
+var mini_menu={};
+class MiniMenu: Reactor.Component {
+    function render(){
+
+        var res=[];
+
+        for (var key in mini_menu){
+            if(mini_menu[key]==true){
+                if(last_menu==key){
+                    res.push(<div  .minimenu-div style="color:blue;" id={key}>{menu_name[key]}<button .minimenu-button id={key} style="color:blue;">✕</button></div>);
+                }else{
+                    res.push(<div  .minimenu-div id={key}>{menu_name[key]}<button .minimenu-button id={key}>✕</button></div>);
+                }
+                
+            }
+        }
+
+        return <div .minimenu-parent >
+                    {res}
+                </div>;
+    }
+    event click $(button)(_,ele){
+        
+        var id=ele.id.toInteger();
+        if(id==undefined){return;}
+        mini_menu[id]=false;
+        for(var key in mini_menu){
+            if(mini_menu[key]==true){
+                last_menu=key;    
+                visible_true_page(key);
+        
+            }
+        }
+        
+        app.update();
+    }
+    event click $(div)(_,ele){
+        stdout.println("mini");
+        
+        var id=ele.id.toInteger();
+        if(id==undefined){return;}
+        last_menu=id;
+            
+        visible_true_page(id);
+        
+        
+        
+        app.update();
+    }
+
+     
+}
+
+var menu_prob={};
+var menu_url={};
+
+var new_menu=true;
+var last_menu;
+//多级菜单
+//TODO: 解析url
+class Multistage: Reactor.Component {
+    this var num_id=0;
+    function this(prob){
+        this.obj=prob.obj;
+        this.num_id=prob.num_id;
+        this.layer=prob.layer;
+        
+    }
+    function render(){
+        var res=[];
+        var sty;
+        if(this.layer==0){
+            sty="padding-left:20px;";
+        }else if(this.layer==1){
+            sty="padding-left:50px;";
+        }else{
+            sty="padding-left:70px;";
+        }
+        
+        for(var i=1;i<=this.obj.length;i++){
+            var o=this.obj[i-1];
+            
+            var id=this.num_id*10+i;
+            menu_name[id]=o.name;
+            
+            if(o.children.length!=0){
+                if(menu_prob[id]==undefined){
+                    menu_prob[id]=false;
+                    
+                }
+                if(menu_prob[id]==true){
+                    res.push(<button .multi-button style={sty} id={id}>{o.name}◢</button>);
+                    res.push(<Multistage obj={o.children} num_id={id} layer={this.layer+1}/>);}
+                else{
+                    res.push(<button .multi-button style={sty} id={id}>{o.name}◥</button>);
+                }
+            }else{
+                if(last_menu==undefined){
+                    last_menu=id;
+                }
+                if(menu_url[id]==undefined){
+                    create_url_page(id,o.url.toString());
+                    menu_url[id]=o.url.toString();
+                }
+                if(last_menu==id){
+                    stdout.println(id);
+                    var t=sty+"background:linear-gradient(to right, white 98%, #006afd 2%);color:#006afd;font-weight:bold;";
+                    res.push(<button .multi-button  style={t} id={id}>{o.name}</button>);
+                }else{
+                res.push(<button .multi-button style={sty} id={id}>{o.name}</button>);
+                }
+            }
+        }
+        return <div .multi-pane>{res}</div>;
+    }
+    event click $(button)(_,ele){
+        
+        var id=ele.id.toInteger();
+        if(id/10!=this.num_id){return;}
+        if(menu_prob[id]==false){
+            menu_prob[id]=true;
+        }else{
+            menu_prob[id]=false;
+        }
+        last_menu=id;
+        
+        if(menu_url[id]!=undefined && menu_prob[id]!=""){
+            mini_menu[id]=true;
+            
+            visible_true_page(id);
+        }
+        
+        
+        app.update();
+    }
+
+}
+
 
 class RemotePage: Reactor.Component {
     function render(){
@@ -794,78 +1072,193 @@ class RemotePage: Reactor.Component {
 }
 
 
+
+var t_svg=<svg #button-menu t="1662349535142" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="18618" width="200" height="200"><path d="M1023.8 604.7c0 160.9-129 291.3-287.9 291.3H256.1C113.3 888.5 0.2 781.3 0.2 650.7c0-99.4 65.6-185 159.9-223.5 19.7-8 33.8-25.5 38.2-46.3C224.9 254.9 340.8 160 480 160c102.6 0 192.4 51.5 243.4 129 10 15.3 26.1 25.5 44.2 28.2 145.2 22 256.2 142.1 256.2 287.5z" p-id="18619" fill="#ffffff"></path></svg>;
+var remote_svg=<svg #button-menu t="1662349629145" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="26009" width="200" height="200"><path d="M523.8 191.4v288.9h382V128.1zM523.8 833.6l382 62.2v-352h-382zM120.1 480.2H443V201.9l-322.9 53.5zM120.1 770.6L443 823.2V543.8H120.1z" p-id="26010" fill="#ffffff"></path></svg>;
+var app_svg=<svg #button-menu t="1662349579209"  viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="24186" width="200" height="200"><path d="M490.666667 533.333333v256a64 64 0 0 1-64 64h-192a64 64 0 0 1-64-64v-192a64 64 0 0 1 64-64h256z m298.666666 0a64 64 0 0 1 64 64v192a64 64 0 0 1-64 64h-192a64 64 0 0 1-64-64V533.333333h256z m-362.666666 64h-192v192h192v-192z m362.666666 0h-192v192h192v-192zM426.666667 170.666667a64 64 0 0 1 64 64v256H234.666667a64 64 0 0 1-64-64v-192a64 64 0 0 1 64-64h192z m266.666666 0a160 160 0 1 1 0 320 160 160 0 0 1 0-320zM426.666667 234.666667h-192v192h192v-192z m266.666666 0a96 96 0 1 0 0 192 96 96 0 0 0 0-192z" p-id="24187" fill="#ffffff"></path></svg>;
+var mine_svg=<svg #button-menu t="1662349104577"  viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="17638" width="200" height="200"><path d="M798.909987 378.24774c0-157.928892-129.560798-285.930171-289.415552-285.930171-159.851685 0-289.413506 128.001279-289.413506 285.930171 0 91.190909 43.35032 172.20913 110.62247 224.580918-120.626311 60.751642-205.53412 181.700295-214.94035 322.271868l43.287899 0c10.154267-131.637086 95.573729-248.180406 214.789924-294.523897 37.879726 17.999956 90.806145 33.604352 135.653563 33.604352s87.152942-10.346649 125.031645-28.346605l29.692253-17.228383 24.049742-15.776312C755.558643 550.45687 798.909987 469.438649 798.909987 378.24774zM754.340909 644.812865l-0.214894 0.297782c-4.724605-4.488221-11.028171-7.353478-18.08489-7.353478-14.556531 0-26.333762 5.559623-26.333762 20.094664 0 10.04682 5.814426 18.467607 14.065344 22.914896l-0.170892 0.25685C802.736129 737.585805 842.647117 823.219137 850.514295 925.100526l52.714596 0C895.661541 811.934117 839.077825 711.166085 754.340909 644.812865z" p-id="17639" fill="#ffffff"></path></svg>;
 class MenuArea:Reactor.Component{
     function render(){
-       
-        if(!menu_node){
+       var me=this;
+
+       var rows=menu_json.map(function(row,index){
+        return me.renderMenu(row,index);
+       });
             return
             <div .left-menu>
-                    <button .menu-button #1 style="background: rgb(0, 127, 255)">远程控制</button>
-                    <button .menu-button #2>投屏</button>
-                    <button .menu-button #3>我的</button>
-                    <button .menu-button #4>我的</button>
-
-                    
-                    
-            </div>;}
-
-        else{
-            return 
-             <div .left-menu>
-                    <button .menu-button #1 >远程控制</button>
-                    <button .menu-button #2>投屏</button>
-                    <button .menu-button #3>我的</button>
-                    <button .menu-button #4>我的</button>
-                    
-                    
+            {rows}
             </div>;
+    }
+    function renderMenu(row,index){
+        var svgl;
+        var name=row.name;
+        if(name=="mine"){
+            svgl=mine_svg;
+            name="我的";
+        }else if(name=="remote"){
+            svgl=remote_svg;
+            name="远程连接";
+        }else if(name=="reject"){
+            svgl=t_svg;
+            name="投屏";
+        }else if(name=="app"){
+            svgl=app_svg;
+            name="应用";
+        }else if(name=="screenshot"){
+            name="截图测试";
         }
+        if(index==last_id){
+            return
+            <div>
+             <button .menu-button id={index} style="background: #2a66f3">
+             {svgl}{name}
+             </button>
+           
+             </div>;
+        }
+        return  <button .menu-button id={index} >
+        {svgl}{name}</button>;
+        
     }
 
     
     event click $(button)(_,ele){
         var id=(ele.id).toInteger();
-        $(button#{menu_page}).style.set{background:"transparent"};
-        ele.style.set{background:"rgb(0, 127, 255)"};
+        var name=menu_json[id].name;
+        $(button#{last_id}).style.set{background:"transparent"};
+        ele.style.set{background:"#2a66f3"};
        
+        if(name=="mine"){
+            view.windowTopmost=false;
+            visible_false_pagee();
+            menu_page=2;
+        }else if(name=="remote"){
+            view.windowTopmost=false;
+            visible_false_pagee();
+            menu_page=0;
+        }else if(name=="reject"){
+            view.windowTopmost=false;
+            visible_false_pagee();
+            menu_page=1;
+        }else if(name=="app"){
+            view.windowTopmost=true;
+            menu_page=3;
+            visible_true_pagee();
+            
+            last_id=id;
+            app.update();
+            var (mx1,my1) = $(#position1).box(#position, #border, #root);
+            var (mx2,my2,mx3,my3) = $(#position2).box(#rect, #border, #root);
+            send_web_position1(mx1,my1,mx3-mx2,my3-my2);
+        }else if(name=="screenshot"){
+            view.windowTopmost=false;
+            menu_page=4;
+            visible_false_pagee();
 
-        menu_page=id;
+        }
+        last_id=id;
+        
 
         app.update();
-         if(id==4){
-            is_url_page=true;
-            if(url_page_num==0){
-                handler.open_url_page("http://114.115.156.246:9110/#/sys/list?menu=false&head=false&tab=false");
-                url_page_num=1;
-            }
+        //  if(menu_page==3){
+        //     is_url_page=true;
+        //     if(url_page_num==0){
+        //         handler.open_url_page("http://114.115.156.246:9110/#/sys/list?menu=false&head=false&tab=false");
+        //         url_page_num=1;
+        //     }
             
-            handler.send_event(5,0,0,0,0);
-        }else{
-            is_url_page=false;
-            handler.send_event(4,0,0,0,0);
-        }
+        //     handler.send_event(5,0,0,0,0);
+        // }else{
+        //     is_url_page=false;
+        //     handler.send_event(4,0,0,0,0);
+        // }
+        
     }
 
 
 }
 
+//TODO: screenshot
+class Screenshot: Reactor.Component {
+    function render(){
+        return
+            <div>
+                <button >screenshot</button>
+            </div>;
+    }
+    event click $(button)(_,ele){
+        stdout.println("screenshot");
+        var image=view.screenBox(0,#snapshot);
+        var bytes=image.toBytes();
+        var path="D:/screenshot/111.png";
+            bytes.save(path);
+        
+    }
+}
+
+
+function update_position(){
+    self.timer(0.5s,function(){
+        if($(#position1)!=undefined){
+        var (mx1,my1) = $(#position1).box(#position, #border, #root);
+        var (mx2,my2,mx3,my3) = $(#position2).box(#rect, #border, #root);
+        send_web_position1(mx1,my1,mx3-mx2,my3-my2);
+        // stdout.println(mx1+" "+my1+" "+mx2+" "+my2+" "+mx3+" "+my3);
+        }
+        update_position();
+    });
+}
+update_position();
+var toggle=-1;
 function update_event(){
     
-    self.timer(0.001s,function(){
-        if(is_url_page){
+    self.timer(0.02s,function(){
+        if(toggle==-1&&view.windowState == View.WINDOW_MINIMIZED ){
+            visible_false_pagee();
+            stdout.println("11");
+            toggle=1;
+        }else{
+            if(toggle==1 &&view.windowState != View.WINDOW_MINIMIZED){
+                visible_true_pagee();
+                toggle=-1;
+                stdout.println("00");
+            }
+        }
+       
+       
             var (x,y,w,h) = view.box(#rectw,#border,#screen);
+    var (xx,yy) = view.cursorLocation();
             
 
             
-            handler.send_event(0,x,y,w,h);
-            }
+            handler.send_event(0,x,y,w,h,"");
+
+            // stdout.println(x+" "+y+" "+w+" "+h+" "+xx+" "+yy+" ");
 
             update_event();
         
     });
 }
 update_event();
+function get_touping(){
+    if(!web_page_data){
+    httpRequest(qingdaourl + "sys/list", #post, {token:qingdao_token}, function(data) {
+        if (data.error) {
+            handleAbError(data.error);
+            return;
+        }
+        var t =JSON.stringify(data);
+        // stdout.println(t);
+        var res=JSON.parse(t).data;
+        
+        web_page_data=res;
+        app.update();
 
+
+        }, function(err, status) {
+        });
+    }
+}
 function set_url_page_top(){
     self.timer(0.1s,function(){
         if(url_page_num==1){
@@ -896,11 +1289,13 @@ class WebPage: Reactor.Component{
 
     function renderRow(index){
         var page=web_page_data[index];
-        var id=index;
-        var pic_id=id+1;
+        var id=index+1000;
+        var pic_id=index+1;
         var url="background-size: 100% 100%; height: 70%; width: 100%; background-image:url(webpic/b"+pic_id+".png);";
         var lurl="background-position:center; background-size: 30%; height: 100%; width: 100%; background-image:url(webpic/l"+pic_id+".png);"; 
         var network=page.networkName;
+        if(page.url==""){return;}
+        stdout.println(page.url);
         if (network=="内网"){
             return 
                 <div .screen-w >
@@ -932,20 +1327,20 @@ class WebPage: Reactor.Component{
 
     event click $(div)(_,ele){
         var id=(ele.id).toInteger();
-        var url=web_page_data[id].url;
+        if(id>=1000){
+        var url=web_page_data[id-1000].url;
+        stdout.println(">>"+url+ "id");
 
-        handler.open_url_page(url);
+        fullsize_page(url);}
     }
 }
 
 class TitleArea: Reactor.Component {
     function render(){
         return <div .title-pane role="window-caption">
-                                <TitleButton/>
-                                <div .icon-div>
-                                    <img .img-top2 src="pic/icon.png" />
-                                </div>
-                            </div>;
+                    <img .img-top2 src="pic/icon.png" />
+                    <TitleButton/>
+                </div>;
     }
 }
 
