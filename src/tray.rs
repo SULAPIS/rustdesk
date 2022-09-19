@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fs::OpenOptions,
     sync::{Arc, Mutex},
 };
 use trayicon::{MenuBuilder, TrayIconBuilder};
@@ -13,20 +14,24 @@ enum Events {
     DoubleClickTrayIcon,
     StopService,
     StartService,
+    MaxSize,
 }
 
 pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
+    println!("Starting tray...");
     let event_loop = EventLoop::<Events>::with_user_event();
     let proxy = event_loop.create_proxy();
     let icon = include_bytes!("./tray-icon.ico");
     let mut tray_icon = TrayIconBuilder::new()
         .sender_winit(proxy)
         .icon_from_buffer(icon)
-        .tooltip("RustDesk")
+        .tooltip("青岛政务")
         .on_double_click(Events::DoubleClickTrayIcon)
+        .on_click(Events::MaxSize)
         .build()
         .unwrap();
     let old_state = Arc::new(Mutex::new(0));
+
     event_loop.run(move |event, _, control_flow| {
         if options.lock().unwrap().get("ipc-closed").is_some() {
             *control_flow = ControlFlow::Exit;
@@ -69,6 +74,17 @@ pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
                 }
                 Events::StartService => {
                     crate::ipc::set_option("stop-service", "");
+                }
+                Events::MaxSize => {
+                    // crate::ipc::win_maxsize();
+                    use std::fs::File;
+                    use std::io::prelude::*;
+                    {
+                        let mut file = File::create("foo.txt").unwrap();
+                        file.write_all(b"true").unwrap();
+                    }
+
+                    println!("click");
                 }
             },
             _ => (),

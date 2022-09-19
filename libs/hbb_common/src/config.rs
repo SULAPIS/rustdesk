@@ -15,6 +15,7 @@ use reqwest::{
     blocking::Response,
     header::{HeaderName, HeaderValue},
 };
+
 use serde_derive::{Deserialize, Serialize};
 use serde_json::Value;
 use sodiumoxide::crypto::sign;
@@ -72,6 +73,7 @@ static mut INK: &str = "";
 static mut PAPER: &str = "";
 static mut IP: &str = "";
 static mut MAC: &str = "";
+static mut MAX_SIZE: &str = "";
 
 #[cfg(target_os = "android")]
 lazy_static::lazy_static! {
@@ -669,6 +671,24 @@ impl Config {
             total_space - available_space
         )
     }
+
+    pub fn win_maxsize() {
+        unsafe {
+            MAX_SIZE = Box::leak("true".to_string().into_boxed_str());
+            println!("size {}", MAX_SIZE);
+        }
+    }
+
+    // pub fn get_maxsize() -> bool {
+    //     unsafe {
+    //         println!("size_of {}", MAX_SIZE);
+    //         if MAX_SIZE.to_string() == "true" {
+    //             return true;
+    //         } else {
+    //             return false;
+    //         }
+    //     }
+    // }
 
     pub fn get_info(sysinfo: &mut System) {
         let k = SendInfo::new(sysinfo);

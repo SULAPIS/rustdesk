@@ -1,3 +1,4 @@
+
 [package]
 name = "rustdesk"
 version = "1.1.10"
@@ -89,7 +90,7 @@ arboard = "2.0"
 system_shutdown = "3.0.0"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-#systray = { git = "https://github.com/open-trade/systray-rs" }
+# systray = { git = "https://github.com/open-trade/systray-rs" }
 trayicon = { git = "https://github.com/open-trade/trayicon-rs", features = [
    "winit",
 ] }
@@ -178,4 +179,4 @@ lto = true
 codegen-units = 1
 panic = 'abort'
 strip = true
-#opt-level = 'z' # only have smaller size after strip
+# opt-level = 'z'   # only have smaller size after strip

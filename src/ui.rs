@@ -31,6 +31,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{
     collections::HashMap,
+    fs::OpenOptions,
     iter::FromIterator,
     process::Child,
     sync::{Arc, Mutex},
@@ -93,7 +94,7 @@ pub fn start(args: &mut [String]) {
     }
     #[cfg(windows)]
     if args.len() > 0 && args[0] == "--tray" {
-        let options = check_connect_status(false).1;
+        let options = check_connect_status(true).1;
         crate::tray::start_tray(options);
         return;
     }
@@ -252,6 +253,24 @@ impl UI {
 
     fn get_info_cpu(&self) -> String {
         ipc::get_info_cpu()
+    }
+    fn get_maxsize(&self) -> bool {
+        // ipc::get_maxsize()
+        use std::fs::File;
+        use std::io::prelude::*;
+        let mut contents = String::new();
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open("foo.txt")
+            .unwrap();
+        file.read_to_string(&mut contents).unwrap();
+
+        if &contents == "true" {
+            let mut file = File::create("foo.txt");
+            return true;
+        }
+        false
     }
 
     fn get_info_memv(&self) -> String {
@@ -974,6 +993,7 @@ impl sciter::EventHandler for UI {
         fn get_disk();
         fn get_info();
         fn get_info_cpu();
+        fn get_maxsize();
         fn get_info_mema();
         fn get_info_memv();
         fn get_info_diska();

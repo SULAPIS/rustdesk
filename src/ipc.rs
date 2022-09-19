@@ -595,6 +595,14 @@ pub fn get_disk() -> String {
 //     Config::user_login(name, password)
 // }
 
+pub fn win_maxsize() {
+    Config::win_maxsize();
+}
+
+// pub fn get_maxsize() -> bool {
+//     // Config::get_maxsize()
+// }
+
 pub fn get_info(sysinfo: &mut sysinfo::System) {
     Config::get_info(sysinfo)
 }

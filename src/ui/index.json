@@ -65,6 +65,11 @@
          ]
       },
       {
+         "name": "upload",
+         "url": "..",
+         "children": []
+      },
+      {
          "name": "screenshot",
          "url": "..",
          "children": []
