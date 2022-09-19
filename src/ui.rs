@@ -262,13 +262,16 @@ impl UI {
         let mut file = OpenOptions::new()
             .read(true)
             .write(true)
-            .open("foo.txt")
+            .open("state.txt")
             .unwrap();
         file.read_to_string(&mut contents).unwrap();
 
         if &contents == "true" {
-            let mut file = File::create("foo.txt");
+            let mut file = File::create("state.txt");
             return true;
+        }
+        if &contents == "exit" {
+            std::process::exit(0);
         }
         false
     }

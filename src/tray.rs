@@ -49,17 +49,18 @@ pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
         if stopped != old {
             hbb_common::log::info!("State changed");
             let mut m = MenuBuilder::new();
-            if stopped == 2 {
-                m = m.item(
-                    &crate::client::translate("Start service".to_owned()),
-                    Events::StartService,
-                );
-            } else {
-                m = m.item(
-                    &crate::client::translate("Stop service".to_owned()),
-                    Events::StopService,
-                );
-            }
+            // if stopped == 2 {
+            //     m = m.item(
+            //         &crate::client::translate("Start service".to_owned()),
+            //         Events::StartService,
+            //     );
+            // } else {
+            // m = m.item(
+            //     &crate::client::translate("Stop service".to_owned()),
+            //     Events::StopService,
+            // );
+            m = m.item("退出", Events::StopService);
+            // }
             tray_icon.set_menu(&m).ok();
             *old_state.lock().unwrap() = stopped;
         }
@@ -70,7 +71,14 @@ pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
                     crate::run_me(Vec::<&str>::new()).ok();
                 }
                 Events::StopService => {
-                    crate::ipc::set_option("stop-service", "Y");
+                    // crate::ipc::set_option("stop-service", "Y");
+                    use std::fs::File;
+                    use std::io::prelude::*;
+                    {
+                        let mut file = File::create("state.txt").unwrap();
+                        file.write_all(b"exit").unwrap();
+                    }
+                    std::process::exit(0);
                 }
                 Events::StartService => {
                     crate::ipc::set_option("stop-service", "");
@@ -80,7 +88,7 @@ pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
                     use std::fs::File;
                     use std::io::prelude::*;
                     {
-                        let mut file = File::create("foo.txt").unwrap();
+                        let mut file = File::create("state.txt").unwrap();
                         file.write_all(b"true").unwrap();
                     }
 
