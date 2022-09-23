@@ -38,13 +38,14 @@ body {
 
     flow: vertical;
     position: absolute;
-    right: 20%;
+    right: 10%;
     top: 30%;
-    width: 25%;
-    height: 45%;
-    background: #fff;
-    box-shadow: 0px 0px 5px #c7bba4;
+    width: 30%;
+    height: 55%;
+    background: #ffff;
+    box-shadow: 0px 0px 5px #9a9898;
     border-radius: 5px;
+
 
 }
 
@@ -101,10 +102,10 @@ body {
     margin: 0;
     position: absolute;
     top: 55%;
-    left: 40%;
+    left: 30%;
     margin-right: -50%;
     transform: translate(-50%, -50%);
-    width: 50%;
+    width: 40%;
 }
 
 
@@ -518,8 +519,8 @@ li:disabled:hover {
 
 .input-user {
     margin: 5% auto 5% auto;
-    background-color: #cddded;
-    border-color: rgb(248, 248, 250);
+    background-color: #ffff;
+    border-color: rgb(147, 147, 148);
     color: rgb(9, 30, 66);
     cursor: text;
     border-radius: 3px;
@@ -536,13 +537,12 @@ li:disabled:hover {
 
 }
 
-.input-user:hover {
+/* .input-user:hover {
     background-color: rgb(235, 236, 240);
-}
+} */
 
 .input-user:focus {
-    background-color: rgb(255, 255, 255);
-    border-color: rgb(92, 154, 255);
+    border: rgb(92, 154, 255);
 }
 
 
@@ -550,7 +550,7 @@ li:disabled:hover {
 .main-button {
     margin: 12% auto 12% auto;
     border-radius: 3px;
-    background: rgb(72, 122, 198);
+    background: rgb(101, 159, 245);
     transition: all 0.3s ease-in-out 0.3s;
     height: 40px;
     width: 53%;
@@ -565,7 +565,7 @@ li:disabled:hover {
 }
 
 .main-button:hover {
-    background-color: rgb(31, 107, 222);
+    background-color: rgb(132, 179, 249);
 }
 
 
@@ -580,6 +580,8 @@ li:disabled:hover {
 
 .login-err {
     color: red;
+    margin-top: 2px;
+    margin-bottom: 20px;
 }
 
 .title-buttons {
@@ -591,11 +593,11 @@ li:disabled:hover {
 }
 
 svg#title-menu {
-    height: 23px;
-    width: 23px;
+    height: 15px;
+    width: 15px;
     background: none;
-    top: 23px;
-    left: 19px;
+    top: 25px;
+    left: 22px;
     position: absolute;
 }
 
@@ -641,8 +643,8 @@ svg#title-menu {
 .img-top {
     margin: 0;
     position: absolute;
-    top: 7.4em;
-    left: 1.1em;
+    top: 4.4em;
+    left: 2.1em;
 
     width: 43%
 }

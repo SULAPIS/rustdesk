@@ -96,6 +96,7 @@ pub fn start(args: &mut [String]) {
     if args.len() > 0 && args[0] == "--tray" {
         let options = check_connect_status(true).1;
         crate::tray::start_tray(options);
+
         return;
     }
     use sciter::SCRIPT_RUNTIME_FEATURES::*;
@@ -254,7 +255,7 @@ impl UI {
     fn get_info_cpu(&self) -> String {
         ipc::get_info_cpu()
     }
-    fn get_maxsize(&self) -> bool {
+    fn get_maxsize(&self) -> String {
         // ipc::get_maxsize()
         use std::fs::File;
         use std::io::prelude::*;
@@ -266,14 +267,47 @@ impl UI {
             .unwrap();
         file.read_to_string(&mut contents).unwrap();
 
-        if &contents == "true" {
-            let mut file = File::create("state.txt");
-            return true;
-        }
+        // if &contents == "minsize" {
+        //     let mut file = File::create("state.txt");
+        //     return true;
+        // }
+        // if &contents == "true" {
+        let mut file = File::create("state.txt");
+        //     return true;
+        // }
         if &contents == "exit" {
             std::process::exit(0);
         }
-        false
+        // false
+        contents.to_string()
+    }
+
+    fn get_close(&self) {
+        // ipc::get_maxsize()
+        use std::fs::File;
+        use std::io::prelude::*;
+        let mut contents = String::new();
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open("state.txt")
+            .unwrap();
+        file.read_to_string(&mut contents).unwrap();
+
+        // if &contents == "minsize" {
+        //     let mut file = File::create("state.txt");
+        //     return true;
+        // }
+        // if &contents == "true" {
+        let mut file = File::create("state.txt").unwrap();
+        file.write_all(b"app_quit").unwrap();
+        //     return true;
+        // }
+        // if &contents == "exit" {
+        std::process::exit(0);
+        // }
+        // false
+        // contents.to_string()
     }
 
     fn get_info_memv(&self) -> String {
@@ -1063,6 +1097,7 @@ impl sciter::EventHandler for UI {
         fn get_software_update_url();
         fn get_new_version();
         fn get_version();
+        fn get_close();
         fn update_me(String);
         fn show_run_without_install();
         fn run_without_install();

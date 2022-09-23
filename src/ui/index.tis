@@ -4,7 +4,7 @@ stdout.println("is_xfce: ", is_xfce);
 
 // // html min-width, min-height not working on mac, below works for all
 
-view.windowMinSize = (scaleIt(700), scaleIt(436));
+view.windowMinSize = (scaleIt(400), scaleIt(250));
 
 // view.windowMaxSize = (scaleIt(600), scaleIt(300));
 // view.move()
@@ -43,8 +43,8 @@ var url_page_num=0;
 
 var web_page_data;
 
-var ruser_name = "admin";
-var ruser_password = "abcd1234!!";
+var ruser_name = "";
+var ruser_password = "";
 
 var svg_menu = <svg #menu viewBox="0 0 512 512">
 	<circle cx="256" cy="256" r="64"/>
@@ -799,8 +799,8 @@ class LoginPage: Reactor.Component {
                             <img .img-center src="pic/body.png" />
                             <div .main-right>
                                 <h1 .welcome>欢迎登录系统</h1>
-                                <input .input-user #input_user value="admin" placeholder="用户名"/>
-                                <input .input-user #input_pass value="abcd1234!!" placeholder="密码"/>
+                                <input .input-user #input_user value="" placeholder="用户名"/>
+                                <input .input-user #input_pass value="" placeholder="密码"/>
                                 <button .main-button #user-login>登录</button>
                                 <h3 .login-err >{login_err}</h3>
                             </div>
@@ -818,6 +818,7 @@ class LoginPage: Reactor.Component {
        stdout.println(ruser_name+"  "+ruser_password+ " "+logined);
        if(logined==false){
             login_err="用户名或密码错误";
+            app.update();
        }
         
         if(logined==true){
@@ -1458,7 +1459,7 @@ class TitleButton:Reactor.Component{
                     {minisize_svg}
                 </button>
                 <button .title-buttonm #maxsize>
-                    {maxsize_svg}
+                    {middlesize_svg}
                 </button>
                 <button .title-button #close-window>
                     {close_svg}
@@ -1472,7 +1473,7 @@ class TitleButton:Reactor.Component{
                     {minisize_svg}
                 </button>
                 <button .title-buttonm #maxsize>
-                    {middlesize_svg}
+                    {maxsize_svg}
                 </button>
                 <button .title-button #close-window>
                     {close_svg}
@@ -1494,7 +1495,7 @@ class TitleButton:Reactor.Component{
             is_maxsize = true;
         }else if(is_maxsize==true){ 
             view.windowState = View.WINDOW_SHOWN;
-            centerize(scaleIt(800), scaleIt(600));
+            centerize(scaleIt(300), scaleIt(250));
             is_maxsize = false;
         }
         app.update();
@@ -1502,7 +1503,7 @@ class TitleButton:Reactor.Component{
     
     
     event click $(button#close-window){
-        handler.close_window();
+        handler.get_close();
         app.update();
     }
 
@@ -1893,7 +1894,7 @@ function updatePasswordArea() {
             password_cache[2] = temporary_password_length;
             update = true;
         }
-        if (update) passwordArea.update();
+        if (update && passwordArea!=undefined) passwordArea.update();
         updatePasswordArea();
     });                          
 }
@@ -1998,11 +1999,19 @@ function get_maxsize(){
     self.timer(1s,function(){
         var l=handler.get_maxsize();
         stdout.println(l);
-        if(l==true){
-            view.windowState= View.WINDOW_MAXIMIZED;
+        if(l=="minsize"){
+            view.windowState= View.WINDOW_MINIMIZED;
             if(menu_page!=3){
             visible_false_pagee();
             }
+            // view.windowState= View.WINDOW_SHOWN;
+        }
+        if(l=="maxsize"){
+            view.windowState= View.WINDOW_MAXIMIZED;
+            if(menu_page==3){
+            visible_false_pagee();
+            }
+            // view.windowState= View.WINDOW_SHOWN;    
         }
         get_maxsize();
     })
@@ -2014,45 +2023,54 @@ function checkConnectStatus() {
         var tmp = !!handler.get_option("stop-service");
         if (tmp != service_stopped) {
             service_stopped = tmp;
-            app.update();
+            if(app!=undefined){
+            app.update();}
         }
         tmp = !!handler.get_option("stop-rendezvous-service");
         if (tmp != rendezvous_service_stopped) {
             rendezvous_service_stopped = tmp;
-            myIdMenu.update();
+            if(myIdMenu!=undefined){
+            myIdMenu.update();}
         }
         tmp = handler.using_public_server();
         if (tmp != using_public_server) {
             using_public_server = tmp;
-            app.connect_status.update();
+            if(app!=undefined){
+            app.connect_status.update();}
         }
         tmp = handler.get_connect_status();
         if (tmp[0] != connect_status) {
             connect_status = tmp[0];
-            app.connect_status.update();
+            if(app!=undefined){
+            app.connect_status.update();}
         }
         if (tmp[1] != key_confirmed) {
             key_confirmed = tmp[1];
-            app.update();
+            if(app!=undefined){
+            app.update();}
         }
-        if (tmp[2] && tmp[2] != my_id) {
+        if (logined==true&& tmp[2] && tmp[2] != my_id) {
             stdout.println("id updated");
-            app.update();
+            if(app!=undefined){
+            app.update();}
         }
         tmp = handler.get_error();
         if (system_error != tmp) {
             system_error = tmp;
-            app.update();
+            if(app!=undefined){
+            app.update();}
         }
         tmp = handler.get_software_update_url();
         if (tmp != software_update_url) {
             software_update_url = tmp;
-            app.update();
+            if(app!=undefined){
+            app.update();}
         }
         if (handler.recent_sessions_updated()) {
             stdout.println("recent sessions updated");
             updateAbPeer();
-            app.update();
+            if(app!=undefined){
+            app.update();}
         }
         check_if_overlay();
         checkConnectStatus();    

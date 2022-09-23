@@ -31,6 +31,7 @@ pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
         .build()
         .unwrap();
     let old_state = Arc::new(Mutex::new(0));
+    let mut count = 0;
 
     event_loop.run(move |event, _, control_flow| {
         if options.lock().unwrap().get("ipc-closed").is_some() {
@@ -64,11 +65,60 @@ pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
             tray_icon.set_menu(&m).ok();
             *old_state.lock().unwrap() = stopped;
         }
+        if count == 0 {
+            crate::run_me(Vec::<&str>::new()).ok();
+            count = 1;
+        }
+        if count == 100 {
+            count = 1;
+            use std::fs::File;
+            use std::io::prelude::*;
+            {
+                let mut contents = String::new();
+                let mut file = OpenOptions::new()
+                    .read(true)
+                    .write(true)
+                    .open("state.txt")
+                    .unwrap();
+                file.read_to_string(&mut contents).unwrap();
+                if contents == "app_quit" {
+                    let mut file = File::create("state.txt").unwrap();
+                    std::process::exit(0);
+                }
+            }
 
+            println!("click");
+        }
+        count += 1;
         match event {
             Event::UserEvent(e) => match e {
+                Events::MaxSize => {
+                    // crate::ipc::win_maxsize();
+                    use std::fs::File;
+                    use std::io::prelude::*;
+                    {
+                        let mut contents = String::new();
+                        let mut file = OpenOptions::new()
+                            .read(true)
+                            .write(true)
+                            .open("state.txt")
+                            .unwrap();
+                        file.read_to_string(&mut contents).unwrap();
+                        if contents == "" {
+                            let mut file = File::create("state.txt").unwrap();
+                            file.write_all(b"minsize").unwrap();
+                        }
+                    }
+
+                    println!("click");
+                }
                 Events::DoubleClickTrayIcon => {
-                    crate::run_me(Vec::<&str>::new()).ok();
+                    use std::fs::File;
+                    use std::io::prelude::*;
+                    {
+                        let mut file = File::create("state.txt").unwrap();
+                        file.write_all(b"maxsize").unwrap();
+                    }
                 }
                 Events::StopService => {
                     // crate::ipc::set_option("stop-service", "Y");
@@ -82,17 +132,6 @@ pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
                 }
                 Events::StartService => {
                     crate::ipc::set_option("stop-service", "");
-                }
-                Events::MaxSize => {
-                    // crate::ipc::win_maxsize();
-                    use std::fs::File;
-                    use std::io::prelude::*;
-                    {
-                        let mut file = File::create("state.txt").unwrap();
-                        file.write_all(b"true").unwrap();
-                    }
-
-                    println!("click");
                 }
             },
             _ => (),
