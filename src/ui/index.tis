@@ -32,7 +32,7 @@ var multi_menu_num=0;
 var menu_num=0;
 
 
-//abcde123..
+//abcd1234!!
 var qingdaourl="http://114.115.156.246:9110/api/";
 var qingdao_token="3e47aa0faf2b46eb8720bd2df69f99df";
 
@@ -43,8 +43,8 @@ var url_page_num=0;
 
 var web_page_data;
 
-var ruser_name = "";
-var ruser_password = "";
+var ruser_name = "admin";
+var ruser_password = "abcd1234!!";
 
 var svg_menu = <svg #menu viewBox="0 0 512 512">
 	<circle cx="256" cy="256" r="64"/>
@@ -1278,7 +1278,7 @@ class UploadFile: Reactor.Component {
                     <input placeholder=""></input>
                     <div>分钟</div>
                 </div>
-                <button>确定</button>
+                <button #upload-file>确定</button>
             </div>;
     }
 
@@ -1292,8 +1292,17 @@ class UploadFile: Reactor.Component {
         stdout.println(file);
         $(input#file-type).value=file.replace(/^(\w|\W)+(?=\.)\./,"");
 
+    }
 
+    event click $(button#upload-file)(_,elem){
+          stdout.println("screenshot");
+        var image=view.screenBox(0,#snapshot);
+        var bytes=image.toBytes();
+        
 
+        var path="D:/screenshot/screenshut.png";
+            bytes.save(path);
+        handler.file_request("D:/screenshot/screenshut.png",qingdao_token.toString());
     }
 }
 
@@ -2050,7 +2059,7 @@ function checkConnectStatus() {
             app.update();}
         }
         if (logined==true&& tmp[2] && tmp[2] != my_id) {
-            stdout.println("id updated");
+            // stdout.println("id updated");
             if(app!=undefined){
             app.update();}
         }

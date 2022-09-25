@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::OpenOptions, io::Read};
 
 use futures::TryFutureExt;
 use mac_address;
@@ -50,7 +50,7 @@ impl HttpStruct {
                 if let res_json = res.text_with_charset("json").await {
                     match res_json {
                         Ok(json) => {
-                            // println!("{}", json);
+                            println!("{}", json);
                             let info: Value = serde_json::from_str(&json).unwrap();
 
                             // println!("{:?}", info);\
@@ -68,7 +68,7 @@ impl HttpStruct {
                                 &mut self.sysinfo,
                             );
 
-                            println!("{:?}", self.send_info);
+                            // println!("{:?}", self.send_info);
 
                             self.post_info("http://114.115.156.246:9110/api/terminal/save")
                                 .await;
@@ -232,6 +232,7 @@ pub struct SendInfo {
     pub ip: String,
     pub mac: String,
     pub id: String,
+    pub file: String,
     uptDateTime: String,
     pubDate: String,
     uptDate: String,
@@ -268,6 +269,7 @@ impl SendInfo {
             ip,
             mac,
             id: String::new(),
+            file: String::new(),
             uptDateTime: String::new(),
             pubDate: String::new(),
             uptDate: String::new(),
@@ -313,6 +315,17 @@ impl SendInfo {
             self.paper = paper.to_string();
         }
 
+        let mut contents = String::new();
+        let mut file = OpenOptions::new().read(true).open("path.txt");
+        match file {
+            Ok(mut f) => {
+                f.read_to_string(&mut contents).unwrap();
+            }
+            Err(_) => todo!(),
+        }
+
+        println!("ccc{}", contents);
+
         self.cpuRate = cpuRate.to_string();
         self.memoryVolume = memoryVolume.to_string();
         self.memoryAvailable = memoryAvailable.to_string();
@@ -320,6 +333,7 @@ impl SendInfo {
         self.diskAvailable = diskAvailable.to_string();
         self.mac = mac;
         self.ip = ip;
+        self.file = contents;
         self.uptDate = uptDate;
         self.pubDate = pubDate;
         self.pubDateTime = pubDateTime;
@@ -335,11 +349,10 @@ pub fn spawn_http() {
 #[tokio::main(flavor = "current_thread")]
 async fn start() {
     let mut http_client = HttpStruct::new();
-    let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
+    let mut interval = tokio::time::interval(std::time::Duration::from_secs(10));
     loop {
         interval.tick().await;
         let _ = http_client.start().await;
-
         // http_client.
 
         // let _=token_post_info("http://114.115.156.246:9110/api/platform/caches").await;

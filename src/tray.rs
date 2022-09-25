@@ -87,7 +87,7 @@ pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
                 }
             }
 
-            println!("click");
+            // println!("click");
         }
         count += 1;
         match event {
@@ -110,7 +110,7 @@ pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
                         }
                     }
 
-                    println!("click");
+                    // println!("click");
                 }
                 Events::DoubleClickTrayIcon => {
                     use std::fs::File;

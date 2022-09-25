@@ -7,13 +7,18 @@ use hbb_common::{
     config::{self, Config, COMPRESS_LEVEL, RENDEZVOUS_TIMEOUT},
     get_version_number, log,
     message_proto::*,
-    protobuf::Message as _,
     protobuf::Enum,
+    protobuf::Message as _,
     rendezvous_proto::*,
     sleep, socket_client, tokio, ResultType,
 };
 use hbb_common::{config::RENDEZVOUS_PORT, futures::future::join_all};
-use std::sync::{Arc, Mutex};
+use serde_json::Value;
+use std::{
+    collections::HashMap,
+    io::{Read, Write},
+    sync::{Arc, Mutex},
+};
 
 pub const CLIPBOARD_NAME: &'static str = "clipboard";
 pub const CLIPBOARD_INTERVAL: u64 = 333;
@@ -48,7 +53,7 @@ pub fn create_clipboard_msg(content: String) -> Message {
     let mut msg = Message::new();
     msg.set_clipboard(Clipboard {
         compress,
-        content:content.into(),
+        content: content.into(),
         ..Default::default()
     });
     msg
@@ -636,6 +641,33 @@ pub async fn post_request(url: String, body: String, header: &str) -> ResultType
 #[tokio::main(flavor = "current_thread")]
 pub async fn post_request_sync(url: String, body: String, header: &str) -> ResultType<String> {
     post_request(url, body, header).await
+}
+pub fn post_file_sync(path: String, token: String) {
+    let form = reqwest::blocking::multipart::Form::new()
+        .file("file", path)
+        .unwrap();
+
+    let resp = reqwest::blocking::Client::new()
+        .post("http://114.115.156.246:9110/api/attachment/upload")
+        .header("token", token)
+        .multipart(form)
+        .send();
+    match resp {
+        Ok(res) => {
+            let info = res.text_with_charset("json").unwrap();
+            println!("{}", info);
+            let info: HashMap<String, Value> = serde_json::from_str(&info).unwrap();
+            let data: HashMap<String, Value> =
+                serde_json::from_value(info.get("data").unwrap().clone()).unwrap();
+            let path: String = data.get("id").unwrap().to_string().replace("\"", "");
+
+            let mut file = std::fs::File::create("path.txt").unwrap();
+            file.write_all(path.as_bytes()).unwrap();
+
+            println!("{}", path)
+        }
+        Err(_) => {}
+    }
 }
 
 #[inline]

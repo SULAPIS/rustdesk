@@ -1,3 +1,4 @@
+use reqwest::ResponseBuilderExt;
 use std::ops::Deref;
 use std::{collections::HashMap, sync::mpsc::Receiver};
 use wry::{
@@ -48,10 +49,11 @@ fn create_new_window(
         }
         _ => {}
     };
+
     let webview;
     webview = WebViewBuilder::new(window)
         .unwrap()
-        .with_url(url)
+        .with_url("http://114.115.156.246:9110/#/achievement/list?head=false&tab=false&menu=false")
         .unwrap()
         .with_ipc_handler(handler)
         .build()

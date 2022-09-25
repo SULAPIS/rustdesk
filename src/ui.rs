@@ -20,11 +20,13 @@ use hbb_common::{
     sysinfo::{self, System, SystemExt},
     tcp::FramedStream,
     tokio::{self, sync::mpsc, time},
+    tokio_util::io::ReaderStream,
     webview,
 };
 use reqwest::{
     blocking::Response,
     header::{HeaderName, HeaderValue},
+    multipart,
 };
 use sciter::Value;
 use serde::{Deserialize, Serialize};
@@ -32,6 +34,7 @@ use serde_json;
 use std::{
     collections::HashMap,
     fs::OpenOptions,
+    io::Read,
     iter::FromIterator,
     process::Child,
     sync::{Arc, Mutex},
@@ -348,6 +351,21 @@ impl UI {
     fn get_token(&self) -> String {
         self.6.clone()
     }
+    // fn send_file(
+    //     &mut self,
+    //     path: String,
+    //     url: String,
+    // ) -> std::result::Result<reqwest::Response, reqwest::Error> {
+    //     let file = tokio::fs::File::open(path).unwrap();
+    //     let stream = ReaderStream::new(file);
+    //     let body = Body::wrap_stream(stream);
+
+    //     reqwest::Client::new()
+    //         .post(format!("{}{}", ADDRESS, url))
+    //         .body(body)
+    //         .send()
+    //         .await
+    // }
 
     fn user_login(&mut self, username: String, password: String) -> String {
         println!("{},{}", username, password);
@@ -958,8 +976,8 @@ impl UI {
     }
 
     fn post_request(&self, url: String, body: String, header: String) {
-        println!("header {}", header);
-        println!("body {}", body);
+        // println!("header {}", header);
+        // println!("body {}", body);
         let status = self.3.clone();
         *status.lock().unwrap() = " ".to_owned();
         std::thread::spawn(move || {
@@ -967,6 +985,12 @@ impl UI {
                 Err(err) => err.to_string(),
                 Ok(text) => text,
             };
+        });
+    }
+
+    fn file_request(&self, path: String, header: String) {
+        std::thread::spawn(move || {
+            crate::post_file_sync(path, header);
         });
     }
 
@@ -1108,6 +1132,7 @@ impl sciter::EventHandler for UI {
         fn change_id(String);
         fn get_async_job_status();
         fn post_request(String, String, String);
+        fn file_request(String,String);
         fn open_url_page();
         fn send_event(i32,i32,i32,i32,i32,String);
         fn is_ok_change_id();
