@@ -53,7 +53,7 @@ fn create_new_window(
     let webview;
     webview = WebViewBuilder::new(window)
         .unwrap()
-        .with_url("http://114.115.156.246:9110/#/achievement/list?head=false&tab=false&menu=false")
+        .with_url(url)
         .unwrap()
         .with_ipc_handler(handler)
         .build()

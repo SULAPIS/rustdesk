@@ -642,29 +642,75 @@ pub async fn post_request(url: String, body: String, header: &str) -> ResultType
 pub async fn post_request_sync(url: String, body: String, header: &str) -> ResultType<String> {
     post_request(url, body, header).await
 }
-pub fn post_file_sync(path: String, token: String) {
+pub fn post_file(path: String, token: String, file_type: String) {
+    // println!("{}", path);
+    let (platform, url) = hbb_common::http_mod::get_app_url();
     let form = reqwest::blocking::multipart::Form::new()
         .file("file", path)
         .unwrap();
 
     let resp = reqwest::blocking::Client::new()
-        .post("http://114.115.156.246:9110/api/attachment/upload")
+        .post(&format!("{}/api/attachment/upload", url))
         .header("token", token)
         .multipart(form)
         .send();
     match resp {
         Ok(res) => {
             let info = res.text_with_charset("json").unwrap();
-            println!("{}", info);
+            println!("rust: {}", info);
             let info: HashMap<String, Value> = serde_json::from_str(&info).unwrap();
             let data: HashMap<String, Value> =
                 serde_json::from_value(info.get("data").unwrap().clone()).unwrap();
             let path: String = data.get("id").unwrap().to_string().replace("\"", "");
 
-            let mut file = std::fs::File::create("path.txt").unwrap();
-            file.write_all(path.as_bytes()).unwrap();
+            {
+                let mut file = std::fs::File::create("path.txt").unwrap();
+                file.write_all(path.as_bytes()).unwrap();
+            }
 
-            println!("{}", path)
+            println!("rust {}", path)
+        }
+        Err(_) => {}
+    }
+}
+fn http_request(url: &str, header: String) -> Result<reqwest::blocking::Response, reqwest::Error> {
+    let client = reqwest::blocking::Client::new();
+    client
+        .post(format!("{}/api/sys/all", url))
+        .header("token", header)
+        .send()
+}
+fn crate_file(url: &str, name: &str) {
+    let mut out = std::fs::File::create(format!("src/ui/webpic/{}.png", name))
+        .expect("failed to create file");
+    let resp = reqwest::blocking::get(url)
+        .expect("request failed")
+        .copy_to(&mut out)
+        .unwrap();
+}
+pub fn download_web_page(token: String) {
+    let (_, url) = hbb_common::http_mod::get_app_url();
+
+    let res = http_request(&url, token);
+    match res {
+        Ok(result) => {
+            let info = result.text_with_charset("json").unwrap();
+            let info: HashMap<String, serde_json::Value> = serde_json::from_str(&info).unwrap();
+            let data = info.get("data").unwrap();
+            let data: Vec<serde_json::Value> = serde_json::from_value(data.clone()).unwrap();
+            for (i, v) in data.iter().enumerate() {
+                let background = v["backgroundAttachmentUrl"].to_string().replace("\"", "");
+                let logo = v["logoAttachmentUrl"].to_string().replace("\"", "");
+
+                println!("{}", background);
+                println!("{}", logo);
+                if background != "null" {
+                    crate_file(&background, &format!("b{}", i + 1));
+                }
+                if logo != "null" {
+                    crate_file(&logo, &format!("l{}", i + 1));
+                }
+            }
         }
         Err(_) => {}
     }

@@ -42,6 +42,7 @@ var login_err=""
 var url_page_num=0;
 
 var web_page_data;
+var web_page_state;
 
 var ruser_name = "admin";
 var ruser_password = "abcd1234!!";
@@ -792,11 +793,11 @@ class LoginPage: Reactor.Component {
                         <div .main-title role="window-caption">
                             <TitleButton/>
                             <div .icon-div>
-                                <img .img-top src="pic/title.png" />
+                                <img .img-top src="pic/login_logo.png" />
                             </div>
                         </div>
                         <div .main-main>
-                            <img .img-center src="pic/body.png" />
+                            <img .img-center src="pic/login_screen.png" />
                             <div .main-right>
                                 <h1 .welcome>欢迎登录系统</h1>
                                 <input .input-user #input_user value="" placeholder="用户名"/>
@@ -809,12 +810,13 @@ class LoginPage: Reactor.Component {
     }
     event click $(button#user-login) {
         
-       qingdao_token= handler.user_login(ruser_name,ruser_password);
-       if(!qingdao_token){
-        logined=false;
-       }else{
+    //    qingdao_token= handler.user_login(ruser_name,ruser_password);
+    //    if(!qingdao_token){
+    //     logined=false;
+    //    }else{
         logined=true;
-       }
+    //    }
+
        stdout.println(ruser_name+"  "+ruser_password+ " "+logined);
        if(logined==false){
             login_err="用户名或密码错误";
@@ -853,6 +855,7 @@ class LoginPage: Reactor.Component {
 
                 logined=true;
                 last_id=0;
+                handler.webpage_request(qingdao_token);
                 app.update();
                 
 
@@ -1260,6 +1263,10 @@ class Screenshot: Reactor.Component {
     }
 }
 
+var file_path="";
+var file_time=-1;
+var file_id="";
+var file_type="";
 //TODO: upload file
 class UploadFile: Reactor.Component {
     function render(){
@@ -1284,28 +1291,96 @@ class UploadFile: Reactor.Component {
 
     event click $(input#choose-file)(_,elem){
         var file = view.selectFile(#open,filter);
-        // httpRequest("attachment/upload",#post,file,function(data){
-
-        // }
+        var filep=file.replace(/^file:\/\//,"");
+        elem.value=filep;
         
-        elem.value=file;
-        stdout.println(file);
-        $(input#file-type).value=file.replace(/^(\w|\W)+(?=\.)\./,"");
+        
 
+        var value=file.replace(/^(\w|\W)+(?=\.)\./,"");
+        // file_type=value;
+        
+        // value=value.
+        $(input#file-type).value=value;
+        $(input#choose-file).value=filep;
+        // stdout.println(file);
+        
     }
 
     event click $(button#upload-file)(_,elem){
-          stdout.println("screenshot");
-        var image=view.screenBox(0,#snapshot);
-        var bytes=image.toBytes();
+        // if(file_path!=""||file_path!=undefined){
+        //     handler.file_request(file_path,qingdao_token.toString());
+        // }
+        file_path=$(input#choose-file).value;
         
+        file_type=$(input#file-type).value;
+        stdout.println(file_path);
 
-        var path="D:/screenshot/screenshut.png";
-            bytes.save(path);
-        handler.file_request("D:/screenshot/screenshut.png",qingdao_token.toString());
+        stdout.println(file_type);  
     }
 }
 
+
+function upload_file(){
+        self.timer(2s,function(){
+             if(file_path!=""){
+                handler.file_request(file_path,qingdao_token.toString(),file_type);
+             
+            // var config = Stream.openFile(self.url("path.txt"));
+     
+            var file_id=handler.get_file_id();
+
+                     stdout.println("sss "+file_id);  
+                httpRequest(qingdaourl+"attachment/receive",#post,{id:file_id, type:file_type},function(data){
+               
+                    if(data.error){
+                        handleAbError(data.error);
+                    //    stdout.println(data.error);
+                        return;
+                    }
+                    var t=JSON.stringify(data);
+                    stdout.println(t);
+                    var res=JSON.parse(t).data;
+
+
+
+                },function(err,status){}, "token: "+qingdao_token);
+                }
+                upload_file();
+        
+        })
+    
+    
+    
+}
+upload_file();
+function upload_screenshot(){
+    self.timer(60s,function(){
+        var image=view.screenBox(0,#snapshot);
+        var bytes=image.toBytes();
+        var path="D:/screenshut.png";
+        bytes.save(path);
+        handler.file_request("D:/screenshut.png",qingdao_token.toString());
+        var file_id=handler.get_file_id();
+
+                    stdout.println("sss "+file_id);  
+            httpRequest(qingdaourl+"attachment/receive",#post,{id:file_id, type:file_type},function(data){
+            
+                if(data.error){
+                    handleAbError(data.error);
+                //    stdout.println(data.error);
+                    return;
+                }
+                var t=JSON.stringify(data);
+                stdout.println(t);
+                var res=JSON.parse(t).data;
+
+
+
+            },function(err,status){}, "token: "+qingdao_token);
+        upload_screenshot();
+    })
+}
+upload_screenshot();
 function update_position(){
     self.timer(0.5s,function(){
         if($(#position1)!=undefined){
@@ -1349,9 +1424,10 @@ function update_event(){
     });
 }
 update_event();
+
 function get_touping(){
     if(!web_page_data){
-    httpRequest(qingdaourl + "sys/list", #post, {token:qingdao_token}, function(data) {
+    httpRequest(qingdaourl + "sys/all", #post, {token:qingdao_token}, function(data) {
         if (data.error) {
             handleAbError(data.error);
             return;
@@ -1361,12 +1437,29 @@ function get_touping(){
         var res=JSON.parse(t).data;
         
         web_page_data=res;
-        app.update();
+        // app.update();
+        if(!web_page_state){
+            httpRequest(qingdaourl + "sys/list", #post, {token:qingdao_token}, function(data) {
+                if (data.error) {
+                    handleAbError(data.error);
+                    return;
+                }
+                var t =JSON.stringify(data);
+                // stdout.println(t);
+                var res=JSON.parse(t).data;
+                
+                web_page_state=res;
+                app.update();
 
+
+                }, function(err, status) {
+            });
+        }
 
         }, function(err, status) {
         });
     }
+
 }
 function set_url_page_top(){
     self.timer(0.1s,function(){
@@ -1398,20 +1491,20 @@ class WebPage: Reactor.Component{
 
     function renderRow(index){
         var page=web_page_data[index];
+        var state_page=web_page_state[index];
         var id=index+1000;
         var pic_id=index+1;
         var url="background-size: 100% 100%; height: 70%; width: 100%; background-image:url(webpic/b"+pic_id+".png);";
         var lurl="background-position:center; background-size: 30%; height: 100%; width: 100%; background-image:url(webpic/l"+pic_id+".png);"; 
-        var network=page.networkName;
-        if(page.url==""){return;}
-        stdout.println(page.url);
+        var network=state_page.networkName;
+        // if(page.url==""){return;}
         if (network=="内网"){
             return 
                 <div .screen-w >
                     <div  id={id} style={url} >
-                    <div id={id} style={lurl}>
-                    <div .web-status-red>{page.networkName}</div>
-                    </div>
+                        <div id={id} style={lurl}>
+                        <div .web-status-red>{network}</div>
+                        </div>
                     </div>
                     <div .screen-down id={id}>
 
@@ -1422,9 +1515,9 @@ class WebPage: Reactor.Component{
             return
                 <div .screen-w >
                     <div id={id} style={url}>
-                    <div id={id} style={lurl}>
-                        <div .web-status-blue>{page.networkName}</div>
-                    </div>
+                        <div id={id} style={lurl}>
+                            <div .web-status-blue>{network}</div>
+                        </div>
                     </div>
                     <div .screen-down id={id}>
 
@@ -1447,7 +1540,7 @@ class WebPage: Reactor.Component{
 class TitleArea: Reactor.Component {
     function render(){
         return <div .title-pane role="window-caption">
-                    <img .img-top2 src="pic/icon.png" />
+                    <img .img-top2 src="pic/home_logo.png" />
                     <TitleButton/>
                 </div>;
     }

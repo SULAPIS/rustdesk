@@ -1,6 +1,5 @@
 use std::{collections::HashMap, fs::OpenOptions, io::Read};
 
-use futures::TryFutureExt;
 use mac_address;
 use reqwest::{
     header::{HeaderName, HeaderValue},
@@ -14,6 +13,23 @@ use serde_json::Value;
 use sysinfo::{self, CpuExt, DiskExt, System, SystemExt};
 use tokio;
 
+pub fn get_app_url() -> (String, String) {
+    let mut contents = String::new();
+    {
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open("config.json")
+            .unwrap();
+        file.read_to_string(&mut contents).unwrap();
+        // println!("{}", contents);
+    }
+    let config: HashMap<String, String> = serde_json::from_str(&mut contents).unwrap();
+    let platform = config.get("platform").unwrap();
+    let url = config.get("url").unwrap();
+    (platform.clone(), url.clone())
+}
+
 const PRINTER_DEF: i32 = 9999;
 
 // pub struct UserInfo {
@@ -26,6 +42,7 @@ pub struct HttpStruct {
     client: Client,
     printers: Vec<Printer>,
     sysinfo: System,
+    url: String,
 }
 impl HttpStruct {
     pub fn new() -> Self {
@@ -38,12 +55,13 @@ impl HttpStruct {
                 .unwrap(),
             printers: Vec::new(),
             sysinfo,
+            url: get_app_url().1,
         }
     }
 
     async fn start(&mut self) {
         let get_res = self
-            .get_info("http://114.115.156.246:9110/api/terminal/mac")
+            .get_info(&format!("{}/api/terminal/mac", self.url))
             .await;
         match get_res {
             Ok(res) => {
@@ -70,7 +88,7 @@ impl HttpStruct {
 
                             // println!("{:?}", self.send_info);
 
-                            self.post_info("http://114.115.156.246:9110/api/terminal/save")
+                            self.post_info(&format!("{}/api/terminal/save", self.url))
                                 .await;
                         }
                         Err(_) => {

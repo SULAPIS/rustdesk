@@ -636,7 +636,7 @@ svg#title-menu {
 .title-pane {
     height: 64px;
     width: *;
-    background-image: url(./pic/head3.png);
+    background-image: url(./pic/title.png);
     background-size: cover;
 }
 
@@ -646,16 +646,16 @@ svg#title-menu {
     top: 4.4em;
     left: 2.1em;
 
-    width: 43%
+    height: 70px;
 }
 
 .img-top2 {
     margin: 0;
     position: absolute;
-    top: 5px;
+    top: 7px;
     left: 23px;
 
-    width: 500px;
+    height: 50px;
 }
 
 
@@ -779,7 +779,7 @@ svg#button-menu {
 .left-menu {
     width: 88px;
     height: *;
-    background-image: url(./pic/left3.png);
+    background-image: url(./pic/home_left.png);
     background-size: cover;
     flow: vertical;
 }
@@ -790,7 +790,7 @@ html {
 
 .screen-bg {
     size: *;
-    background-image: url(pic/bg.png);
+    background-image: url(pic/background.png);
     background-size: cover;
     horizontal-align: center;
 }
@@ -844,7 +844,7 @@ html {
 
     margin-top: 10%;
     color: #88ffcc;
-    margin-left: 1em;
+    margin-left: 15px;
 }
 
 .web-status-red {

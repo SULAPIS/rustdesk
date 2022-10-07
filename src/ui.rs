@@ -65,6 +65,7 @@ struct UI(
     String,
     System,
     Option<std::sync::mpsc::Sender<(i32, i32, i32, i32, i32, String)>>,
+    String,
 );
 
 struct UIHostHandler;
@@ -231,6 +232,7 @@ impl UI {
             String::new(),
             sysinfo::System::new_all(),
             None,
+            String::new(),
         )
     }
 
@@ -263,26 +265,27 @@ impl UI {
         use std::fs::File;
         use std::io::prelude::*;
         let mut contents = String::new();
-        let mut file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open("state.txt")
-            .unwrap();
-        file.read_to_string(&mut contents).unwrap();
+        let mut file = OpenOptions::new().read(true).write(true).open("state.txt");
+        match &mut file {
+            Ok(f) => {
+                f.read_to_string(&mut contents).unwrap();
 
-        // if &contents == "minsize" {
-        //     let mut file = File::create("state.txt");
-        //     return true;
-        // }
-        // if &contents == "true" {
-        let mut file = File::create("state.txt");
-        //     return true;
-        // }
-        if &contents == "exit" {
-            std::process::exit(0);
+                // if &contents == "minsize" {
+                //     let mut file = File::create("state.txt");
+                //     return true;
+                // }
+                // if &contents == "true" {
+                let mut file = File::create("state.txt");
+                //     return true;
+                // }
+                if &contents == "exit" {
+                    std::process::exit(0);
+                }
+                // false
+                contents.to_string()
+            }
+            Err(_) => "".to_string(),
         }
-        // false
-        contents.to_string()
     }
 
     fn get_close(&self) {
@@ -988,9 +991,27 @@ impl UI {
         });
     }
 
-    fn file_request(&self, path: String, header: String) {
+    fn get_file_id(&self) -> String {
+        let mut contents = String::new();
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open("path.txt")
+            .unwrap();
+        file.read_to_string(&mut contents).unwrap();
+        contents
+        // self.9.clone()
+    }
+
+    fn file_request(&self, path: String, header: String, file_type: String) {
         std::thread::spawn(move || {
-            crate::post_file_sync(path, header);
+            crate::post_file(path, header, file_type);
+        });
+    }
+
+    fn webpage_request(&self, header: String) {
+        std::thread::spawn(move || {
+            crate::download_web_page(header);
         });
     }
 
@@ -1132,9 +1153,11 @@ impl sciter::EventHandler for UI {
         fn change_id(String);
         fn get_async_job_status();
         fn post_request(String, String, String);
-        fn file_request(String,String);
+        fn file_request(String,String,String);
+        fn webpage_request(String);
         fn open_url_page();
         fn send_event(i32,i32,i32,i32,i32,String);
+        fn get_file_id();
         fn is_ok_change_id();
         fn create_shortcut(String);
         fn discover();

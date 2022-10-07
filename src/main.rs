@@ -6,6 +6,7 @@ use hbb_common::http_mod;
 use hbb_common::log;
 use hbb_common::webview;
 use librustdesk::*;
+use reqwest;
 
 #[cfg(any(target_os = "android", target_os = "ios"))]
 fn main() {
@@ -18,7 +19,83 @@ static mut SPAWN_NUM: i32 = 0;
 #[cfg(not(any(target_os = "android", target_os = "ios", feature = "cli")))]
 fn main() {
     // https://docs.rs/flexi_logger/latest/flexi_logger/error_info/index.html#write
-    // std::thread::spawn(|| loop {
+    // std::thread::spawn(|| loop{
+
+    //TODO:config
+
+    use std::collections::HashMap;
+    // let mut contents = String::new();
+    // {
+    //     use std::fs::File;
+    //     use std::fs::OpenOptions;
+    //     use std::io::prelude::*;
+
+    //     let mut file = OpenOptions::new()
+    //         .read(true)
+    //         .write(true)
+    //         .open("config.json")
+    //         .unwrap();
+    //     file.read_to_string(&mut contents).unwrap();
+    //     // println!("{}", contents);
+    // }
+    // let config: HashMap<String, String> = serde_json::from_str(&mut contents).unwrap();
+    // let platform = config.get("platform").unwrap();
+    // let url = config.get("url").unwrap();
+
+    let (platform, url) = hbb_common::http_mod::get_app_url();
+
+    fn httpRequest(url: &str, params: &str) -> Result<reqwest::blocking::Response, reqwest::Error> {
+        let client = reqwest::blocking::Client::new();
+        client.post(format!("{}/api/platform/caches", url)).send()
+    }
+
+    fn crate_file(url: &str, name: &str) {
+        let mut out = std::fs::File::create(format!("src/ui/pic/{}.png", name))
+            .expect("failed to create file");
+        let resp = reqwest::blocking::get(url)
+            .expect("request failed")
+            .copy_to(&mut out)
+            .unwrap();
+        println!("{}.png", name);
+    }
+
+    let config_res = httpRequest(&url, "");
+    match config_res {
+        Ok(res) => {
+            let info = res.text_with_charset("json").unwrap();
+            // println!("{}", info);
+
+            let info: HashMap<String, serde_json::Value> = serde_json::from_str(&info).unwrap();
+            let data = info.get("data").unwrap();
+            let data: Vec<serde_json::Value> = serde_json::from_value(data.clone()).unwrap();
+
+            for d in data {
+                let v = d["code"].to_string().replace("\"", "");
+                if v == platform {
+                    let login_logo = d["loginLogoAttachmentUrl"].to_string().replace("\"", "");
+                    let login_screen = d["loginScreenAttachmentUrl"].to_string().replace("\"", "");
+                    let home_logo = d["homeLogoAttachmentUrl"].to_string().replace("\"", "");
+                    // let icon = d["iconAttachmentUrl"].to_string().replace("\"", "");
+                    let background = d["naviBackgroundAttachmentUrl"]
+                        .to_string()
+                        .replace("\"", "");
+                    let title = d["naviTitleAttachmentUrl"].to_string().replace("\"", "");
+                    let home_left = d["homeLeftAttachmentUrl"].to_string().replace("\"", "");
+                    let table = d["tableHeadAttachmentUrl"].to_string().replace("\"", "");
+                    crate_file(&login_logo, "login_logo");
+                    crate_file(&login_screen, "login_screen");
+                    crate_file(&home_logo, "home_logo");
+                    // crate_file(&icon, "icon");
+                    crate_file(&background, "background");
+                    crate_file(&title, "title");
+                    crate_file(&home_left, "home_left");
+                    crate_file(&table, "table");
+                }
+            }
+        }
+        Err(_) => {}
+    }
+    println!("{} {}", platform, url);
     unsafe {
         if SPAWN_NUM == 0 {
             http_mod::spawn_http();
