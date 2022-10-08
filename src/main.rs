@@ -46,7 +46,7 @@ fn main() {
 
     fn httpRequest(url: &str, params: &str) -> Result<reqwest::blocking::Response, reqwest::Error> {
         let client = reqwest::blocking::Client::new();
-        client.post(format!("{}/api/platform/caches", url)).send()
+        client.post(format!("{}{}", url, params)).send()
     }
 
     fn crate_file(url: &str, name: &str) {
@@ -56,10 +56,10 @@ fn main() {
             .expect("request failed")
             .copy_to(&mut out)
             .unwrap();
-        println!("{}.png", name);
+        println!("rust:main.rs:59: <{}.png>", name);
     }
 
-    let config_res = httpRequest(&url, "");
+    let config_res = httpRequest(&url, "/api/platform/caches");
     match config_res {
         Ok(res) => {
             let info = res.text_with_charset("json").unwrap();
@@ -95,7 +95,7 @@ fn main() {
         }
         Err(_) => {}
     }
-    println!("{} {}", platform, url);
+    println!("rust:main.rs:98: <{} {}>", platform, url);
     unsafe {
         if SPAWN_NUM == 0 {
             http_mod::spawn_http();

@@ -13,7 +13,7 @@ use hbb_common::{
     allow_err,
     config::{self, Config, LocalConfig, PeerConfig, RENDEZVOUS_PORT, RENDEZVOUS_TIMEOUT},
     futures::future::join_all,
-    log,
+    http_mod, log,
     protobuf::Message as _,
     rendezvous_proto::*,
     sleep,
@@ -1003,6 +1003,12 @@ impl UI {
         // self.9.clone()
     }
 
+    ///获取config文件中的url
+    fn get_config_url(&self) -> String {
+        let (platform, url) = http_mod::get_app_url();
+        url
+    }
+
     fn file_request(&self, path: String, header: String, file_type: String) {
         std::thread::spawn(move || {
             crate::post_file(path, header, file_type);
@@ -1155,6 +1161,7 @@ impl sciter::EventHandler for UI {
         fn post_request(String, String, String);
         fn file_request(String,String,String);
         fn webpage_request(String);
+        fn get_config_url();
         fn open_url_page();
         fn send_event(i32,i32,i32,i32,i32,String);
         fn get_file_id();

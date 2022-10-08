@@ -33,7 +33,7 @@ var menu_num=0;
 
 
 //abcd1234!!
-var qingdaourl="http://114.115.156.246:9110/api/";
+var qingdaourl="http://120.27.101.63:9110/api/";
 var qingdao_token="3e47aa0faf2b46eb8720bd2df69f99df";
 
 
@@ -77,6 +77,11 @@ var my_disk = "";
 function get_disk() {
   my_disk = handler.get_disk();
   return my_disk;
+}
+
+function get_config_url(){
+    var url=handler.get_config_url();
+    return url+"/api/";
 }
 
 function get_info(){
@@ -613,7 +618,8 @@ class App: Reactor.Component
 {
     function this() {
         app = this;
-        view.windowState = View.WINDOW_MAXIMIZED;
+        view.windowState = View.WINDOW_SHOWN;
+        view.windowState = View.WINDOW_MAXIMIZED; 
         is_maxsize=true;
         view.windowTopmost=true;
             
@@ -787,6 +793,7 @@ class BorderMargin: Reactor.Component {
 
 var menu_buttons;
 
+
 class LoginPage: Reactor.Component {
     function render(){
         return <div .main-user role="window-caption">
@@ -817,7 +824,6 @@ class LoginPage: Reactor.Component {
         logined=true;
     //    }
 
-       stdout.println(ruser_name+"  "+ruser_password+ " "+logined);
        if(logined==false){
             login_err="用户名或密码错误";
             app.update();
@@ -826,6 +832,7 @@ class LoginPage: Reactor.Component {
         if(logined==true){
             handler.open_url_page();
             httpRequest(qingdaourl+"rolefunction/getauthoritymenus",#post,{categoryID: "323232", orderByField: "sequenceNo"},function(data){
+                //获取投屏数据
                  get_touping();
                 if(data.error){
                     handleAbError(data.error);
@@ -833,7 +840,7 @@ class LoginPage: Reactor.Component {
                     return;
                 }
                 var t=JSON.stringify(data);
-                // stdout.println(t);
+                // stdout.println("get menus:" +t);
                 var res=JSON.parse(t).data;
                 page_obj=res;
                 menu_json=res;
@@ -894,12 +901,6 @@ class LoginPage: Reactor.Component {
                 // }
                 // last_id=0;
                 // app.update();
-
-
-
-                
-                    
-
 
 
             },function(err,status){}, "token: "+qingdao_token);
@@ -1264,29 +1265,50 @@ class Screenshot: Reactor.Component {
 }
 
 var file_path="";
-var file_time=-1;
+var file_time=2000;
 var file_id="";
 var file_type="";
+var file_send_begin=false;
 //TODO: upload file
 class UploadFile: Reactor.Component {
     function render(){
-        return
-            <div style="margin:20px 20px;">
-                <div style="flow:horizontal;margin-bottom:20px;">
-                    <div>选择文件: </div>
-                    <input #choose-file placeholder="文件名"></input>
-                </div>
-                <div style="flow:horizontal;margin-bottom:20px;">
-                    <div>文件类型: </div>
-                    <input #file-type placeholder=""></input>
-                </div>
-                <div style="flow:horizontal;margin-bottom:20px;">
-                    <div>上传频率: 每隔</div>
-                    <input placeholder=""></input>
-                    <div>分钟</div>
-                </div>
-                <button #upload-file>确定</button>
-            </div>;
+        if(file_send_begin){
+            return
+                <div style="margin:20px 20px;">
+                    <div style="flow:horizontal;margin-bottom:20px;">
+                        <div>选择文件: </div>
+                        <input #choose-file placeholder="文件名"></input>
+                    </div>
+                    <div style="flow:horizontal;margin-bottom:20px;">
+                        <div>文件类型: </div>
+                        <input #file-type placeholder=""></input>
+                    </div>
+                    <div style="flow:horizontal;margin-bottom:20px;">
+                        <div>上传频率: 每隔</div>
+                        <input type="number" #file-time style="height:30px;width:200px"></input>
+                        <div>分钟</div>
+                    </div>
+                    <button #upload-file>停止</button>
+                </div>;
+        }else{
+            return
+                <div style="margin:20px 20px;">
+                    <div style="flow:horizontal;margin-bottom:20px;">
+                        <div>选择文件: </div>
+                        <input #choose-file placeholder="文件名"></input>
+                    </div>
+                    <div style="flow:horizontal;margin-bottom:20px;">
+                        <div>文件类型: </div>
+                        <input #file-type placeholder=""></input>
+                    </div>
+                    <div style="flow:horizontal;margin-bottom:20px;">
+                        <div>上传频率: 每隔</div>
+                        <input type="number" #file-time style="height:30px;width:200px"></input>
+                        <div>分钟</div>
+                    </div>
+                    <button #upload-file>开始</button>
+                </div>;
+        }
     }
 
     event click $(input#choose-file)(_,elem){
@@ -1307,80 +1329,68 @@ class UploadFile: Reactor.Component {
     }
 
     event click $(button#upload-file)(_,elem){
-        // if(file_path!=""||file_path!=undefined){
-        //     handler.file_request(file_path,qingdao_token.toString());
-        // }
-        file_path=$(input#choose-file).value;
+        if(file_send_begin==false){
+            file_send_begin=true;
+             file_path=$(input#choose-file).value;
         
-        file_type=$(input#file-type).value;
-        stdout.println(file_path);
+            file_type=$(input#file-type).value;
+            var time=$(input#file-time).value;
+            file_time=time*1000*60;
 
-        stdout.println(file_type);  
+            // stdout.println(file_path);
+
+            // stdout.println(file_type);  
+
+            upload_file(file_path, file_type,file_time);
+            // file_upload(file_path,file_type);
+        }else{
+            file_send_begin=false;
+            file_path="";
+            file_type="";
+            file_time=2000;
+        }
+        app.update();
+       
     }
 }
 
+function file_upload(file_path,file_type){
+        handler.file_request(file_path,qingdao_token.toString(),file_type);
 
-function upload_file(){
-        self.timer(2s,function(){
-             if(file_path!=""){
-                handler.file_request(file_path,qingdao_token.toString(),file_type);
-             
-            // var config = Stream.openFile(self.url("path.txt"));
-     
-            var file_id=handler.get_file_id();
-
-                     stdout.println("sss "+file_id);  
-                httpRequest(qingdaourl+"attachment/receive",#post,{id:file_id, type:file_type},function(data){
-               
-                    if(data.error){
-                        handleAbError(data.error);
-                    //    stdout.println(data.error);
-                        return;
-                    }
-                    var t=JSON.stringify(data);
-                    stdout.println(t);
-                    var res=JSON.parse(t).data;
-
-
-
-                },function(err,status){}, "token: "+qingdao_token);
-                }
-                upload_file();
-        
-        })
-    
-    
-    
 }
-upload_file();
+
+
+function upload_file(path,type,time){
+        
+    self.timer(file_time,function(){
+        if(file_path==path&&file_type==type&&time==file_time){
+        file_upload(path,type);
+        
+            
+            upload_file(path,type,time);
+        }
+    })
+}
 function upload_screenshot(){
     self.timer(60s,function(){
         var image=view.screenBox(0,#snapshot);
         var bytes=image.toBytes();
-        var path="D:/screenshut.png";
+        var path="D:/screenshot.png";
         bytes.save(path);
-        handler.file_request("D:/screenshut.png",qingdao_token.toString());
-        var file_id=handler.get_file_id();
-
-                    stdout.println("sss "+file_id);  
-            httpRequest(qingdaourl+"attachment/receive",#post,{id:file_id, type:file_type},function(data){
-            
-                if(data.error){
-                    handleAbError(data.error);
-                //    stdout.println(data.error);
-                    return;
-                }
-                var t=JSON.stringify(data);
-                stdout.println(t);
-                var res=JSON.parse(t).data;
-
-
-
-            },function(err,status){}, "token: "+qingdao_token);
+        file_upload(path,"png");
         upload_screenshot();
     })
 }
 upload_screenshot();
+
+function maxwindow(){
+    self.timer(0.5s,function(){
+        view.windowState = View.WINDOW_SHOWN;
+        view.windowState = View.WINDOW_MAXIMIZED; 
+    })
+}
+maxwindow();
+
 function update_position(){
     self.timer(0.5s,function(){
         if($(#position1)!=undefined){
@@ -1427,19 +1437,19 @@ update_event();
 
 function get_touping(){
     if(!web_page_data){
-    httpRequest(qingdaourl + "sys/all", #post, {token:qingdao_token}, function(data) {
+    httpRequest(qingdaourl + "sys/all", #post,{}, function(data) {
         if (data.error) {
             handleAbError(data.error);
             return;
         }
         var t =JSON.stringify(data);
-        // stdout.println(t);
+        // stdout.println("get_touping: "+t);
         var res=JSON.parse(t).data;
         
         web_page_data=res;
         // app.update();
         if(!web_page_state){
-            httpRequest(qingdaourl + "sys/list", #post, {token:qingdao_token}, function(data) {
+            httpRequest(qingdaourl + "sys/list", #post, {}, function(data) {
                 if (data.error) {
                     handleAbError(data.error);
                     return;
@@ -1452,12 +1462,10 @@ function get_touping(){
                 app.update();
 
 
-                }, function(err, status) {
-            });
+                }, function(err, status) {}, "token: "+qingdao_token);
         }
 
-        }, function(err, status) {
-        });
+        }, function(err, status) {}, "token: "+qingdao_token);
     }
 
 }
@@ -1473,7 +1481,7 @@ function set_url_page_top(){
 
 class WebPage: Reactor.Component{
     function render(){
-       if(!web_page_data){
+       if(!web_page_data && !web_page_state){
         return;
        }
         var me=this;
@@ -2070,22 +2078,32 @@ function self.closing() {
 }
 
 function self.ready() {
+
+    var url=get_config_url();
+    qingdaourl=url;
+   
     var r = handler.get_size();
     if (isReasonableSize(r) && r[2] > 0) {
         var (sx, sy, sw, sh) = view.screenBox(#workarea, #rectw);
         // if (r[2] >= sw && r[3] >= sh) {
-            self.timer(1ms, function() { view.windowState = View.WINDOW_MAXIMIZED; });
+            self.timer(1ms, function() { 
+                view.windowState = View.WINDOW_SHOWN;
+                view.windowState = View.WINDOW_MAXIMIZED; });
         // } else {
             // view.move(r[0], r[1], r[2], r[3]);
         // }
     } else {
-        centerize(scaleIt(800), scaleIt(600));
+        // centerize(scaleIt(800), scaleIt(600));
+        view.windowState = View.WINDOW_SHOWN;
+        view.windowState = View.WINDOW_MAXIMIZED; 
     }
     if (!handler.get_remote_id()) {
         view.focus = $(#remote_id);
     }
     refreshCurrentUser();
     updateTheme();
+    view.windowState = View.WINDOW_SHOWN;
+        view.windowState = View.WINDOW_MAXIMIZED; 
 }
 
 function showAbout() {

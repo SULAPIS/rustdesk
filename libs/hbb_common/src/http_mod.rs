@@ -13,6 +13,9 @@ use serde_json::Value;
 use sysinfo::{self, CpuExt, DiskExt, System, SystemExt};
 use tokio;
 
+///获取config文件信息
+///
+/// 返回：platform, url
 pub fn get_app_url() -> (String, String) {
     let mut contents = String::new();
     {
@@ -68,7 +71,7 @@ impl HttpStruct {
                 if let res_json = res.text_with_charset("json").await {
                     match res_json {
                         Ok(json) => {
-                            println!("{}", json);
+                            // println!("rust:http_mod:74: {}", json);
                             let info: Value = serde_json::from_str(&json).unwrap();
 
                             // println!("{:?}", info);\
@@ -98,7 +101,7 @@ impl HttpStruct {
                 }
             }
             Err(_) => {
-                println!("get_http err");
+                println!("rust:http_mod:104: post_http err");
             }
         }
     }
@@ -143,7 +146,7 @@ impl HttpStruct {
             .await;
         match response {
             Ok(res) => {
-                // println!("{:?}", res);
+                println!("rust:http_mod:149: {:?}", res);
                 let info: HashMap<String, Value> = serde_json::from_str(&res).unwrap();
                 let printers: Vec<Value> =
                     serde_json::from_value(info.get("printers").unwrap().clone()).unwrap();
@@ -156,7 +159,7 @@ impl HttpStruct {
                 }
 
                 self.printers = printers_vec;
-                // println!("{:?}", self.printers);
+                println!("rust:http_mod:149: {:?}", self.printers);
             }
             Err(e) => {
                 println!("get printer devices err");
@@ -342,7 +345,7 @@ impl SendInfo {
             Err(_) => todo!(),
         }
 
-        println!("ccc{}", contents);
+        // println!("rust:http_mod.rs:348: <{}>", contents);
 
         self.cpuRate = cpuRate.to_string();
         self.memoryVolume = memoryVolume.to_string();
@@ -367,7 +370,7 @@ pub fn spawn_http() {
 #[tokio::main(flavor = "current_thread")]
 async fn start() {
     let mut http_client = HttpStruct::new();
-    let mut interval = tokio::time::interval(std::time::Duration::from_secs(10));
+    let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
     loop {
         interval.tick().await;
         let _ = http_client.start().await;
