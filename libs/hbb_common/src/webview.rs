@@ -167,7 +167,7 @@ async fn start(rx: Receiver<(i32, i32, i32, i32, i32, String)>) {
                     }
                 }
                 7 => {
-                    println!("event 7");
+                    // println!("event 7");
                     x1 = x;
                     y1 = y;
                     x2 = w;

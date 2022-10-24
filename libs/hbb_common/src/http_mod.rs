@@ -71,13 +71,13 @@ impl HttpStruct {
                 if let res_json = res.text_with_charset("json").await {
                     match res_json {
                         Ok(json) => {
-                            // println!("rust:http_mod:74: {}", json);
+                            println!("rust:http_mod:74: {}\n", json);
                             let info: Value = serde_json::from_str(&json).unwrap();
 
-                            // println!("{:?}", info);\
-                            self.update_printers().await;
-                            let (ink, paper) = self.get_min_printer_info();
-
+                            println!("rust:http_mod:77: {:?}\n", info);
+                            // self.update_printers().await;
+                            // let (ink, paper) = self.get_min_printer_info();
+                            let (ink, paper) = (0, 0);
                             self.send_info.update(
                                 ink,
                                 paper,
@@ -89,7 +89,7 @@ impl HttpStruct {
                                 &mut self.sysinfo,
                             );
 
-                            // println!("{:?}", self.send_info);
+                            println!("{:?}", self.send_info);
 
                             self.post_info(&format!("{}/api/terminal/save", self.url))
                                 .await;
@@ -263,7 +263,11 @@ pub struct SendInfo {
 impl SendInfo {
     pub fn new(sys: &mut System) -> Self {
         sys.refresh_all();
-        let mac = mac_address::get_mac_address().unwrap().unwrap().to_string();
+        let mac = mac_address::get_mac_address()
+            .unwrap()
+            .unwrap()
+            .to_string()
+            .replace(":", "");
 
         let mut allDiskSpace = 0;
         let mut availableSpace = 0;
@@ -310,7 +314,11 @@ impl SendInfo {
         sys: &mut System,
     ) {
         sys.refresh_all();
-        let mac = mac_address::get_mac_address().unwrap().unwrap().to_string();
+        let mac = mac_address::get_mac_address()
+            .unwrap()
+            .unwrap()
+            .to_string()
+            .replace(":", "");
 
         let mut allDiskSpace = 0;
         let mut availableSpace = 0;
@@ -372,8 +380,8 @@ async fn start() {
     let mut http_client = HttpStruct::new();
     let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
     loop {
-        interval.tick().await;
         let _ = http_client.start().await;
+        interval.tick().await;
         // http_client.
 
         // let _=token_post_info("http://114.115.156.246:9110/api/platform/caches").await;

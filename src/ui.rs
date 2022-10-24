@@ -372,36 +372,36 @@ impl UI {
 
     fn user_login(&mut self, username: String, password: String) -> String {
         println!("{},{}", username, password);
-        let client = reqwest::blocking::Client::builder()
-            .danger_accept_invalid_certs(true)
-            .build()
-            .unwrap();
+        let client = reqwest::blocking::Client::builder().build().unwrap();
 
         let result = Self::post_fn(
             "api/member/login",
             &UserInfo { username, password },
             &client,
         );
+        println!("{:?}", &result);
 
-        match result {
-            Ok(res) => {
-                let text = res.text().unwrap();
-                let info: HashMap<String, serde_json::Value> = serde_json::from_str(&text).unwrap();
-                let code = info.get("code").unwrap().to_string();
-                if code == "0" {
-                    String::new()
-                } else {
-                    let data: HashMap<String, serde_json::Value> =
-                        serde_json::from_value(info.get("data").unwrap().clone()).unwrap();
-                    let token = data.get("token").unwrap().to_string().replace("\"", "");
-                    println!("{}", token);
-                    self.set_token(token.clone());
+        // match result {
+        //     Ok(res) => {
+        //         let text = res.text().unwrap();
+        //         println!("... {}", text);
+        //         // let info: HashMap<String, serde_json::Value> = serde_json::from_str(&text).unwrap();
+        //         let code = info.get("code").unwrap().to_string();
+        //         if code == "0" {
+        //             String::new()
+        //         } else {
+        //             let data: HashMap<String, serde_json::Value> =
+        //                 serde_json::from_value(info.get("data").unwrap().clone()).unwrap();
+        //             let token = data.get("token").unwrap().to_string().replace("\"", "");
+        //             println!("{}", token);
+        //             self.set_token(token.clone());
 
-                    token
-                }
-            }
-            Err(e) => String::new(),
-        }
+        // token
+        "3e47aa0faf2b46eb8720bd2df69f99df".to_string()
+        //         }
+        //     }
+        //     Err(e) => String::new(),
+        // }
     }
 
     fn post_fn<T>(
@@ -415,10 +415,6 @@ impl UI {
         client
             .post(format!("{}{}", ADDRESS, url))
             .json(&param)
-            .header(
-                HeaderName::from_static("content-type"),
-                HeaderValue::from_static("application/json"),
-            )
             .send()
     }
 

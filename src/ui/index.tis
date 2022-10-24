@@ -45,7 +45,7 @@ var web_page_data;
 var web_page_state;
 
 var ruser_name = "admin";
-var ruser_password = "abcd1234!!";
+var ruser_password = "abcde1234..";
 
 var svg_menu = <svg #menu viewBox="0 0 512 512">
 	<circle cx="256" cy="256" r="64"/>
@@ -816,99 +816,86 @@ class LoginPage: Reactor.Component {
                     </div>;
     }
     event click $(button#user-login) {
+
+        httpRequest(qingdaourl+"member/login",#post,{username: ruser_name, password: ruser_password},function(data){
+            if(data.error){
+                    handleAbError(data.error);
+                login_err="用户名或密码错误";
+                app.update();
+                return;
+            }
+            var data_str=JSON.stringify(data);
+            var parse=JSON.parse(data_str);
+            var data= parse.data;
+            var code = parse.code;
+            if(code==1){
+                logined=true;
+                qingdao_token=data.token;
+
+                if(logined==true){
+                    handler.open_url_page();
+                    httpRequest(qingdaourl+"rolefunction/getauthoritymenus",#post,{categoryID: "323232", orderByField: "sequenceNo"},function(data){
+                        //获取投屏数据
+                        get_touping();
+                        if(data.error){
+                            handleAbError(data.error);
+                        //    stdout.println(data.error);
+                            return;
+                        }
+                        var t=JSON.stringify(data);
+                        // stdout.println("get menus:" +t);
+                        var res=JSON.parse(t).data;
+                        menu_json=res;
+                        
+                        var name=menu_json[0].page;
+                        switch(name){
+                            case "mine":
+                                menu_page=2;
+                                break;
+                            case "remote":
+                                menu_page=0;
+                                break;
+                            case "projection":
+                                menu_page=1;
+                                break;
+                            case "screenshot":
+                                menu_page=4;
+                                break;
+                            case "upload":
+                                menu_page=5;
+                                break;
+                            default:
+                                menu_page=0;
+                        }
+                        logined=true;
+                        last_id=0;
+                        app.update();
+                        handler.webpage_request(qingdao_token);
+                        
+                    },function(err,status){}, "token: "+qingdao_token);
+                }
+            }else{
+                login_err="用户名或密码错误";
+                app.update();
+            }
+
+
+
+        },function(err,status){});
         
     //    qingdao_token= handler.user_login(ruser_name,ruser_password);
     //    if(!qingdao_token){
-    //     logined=false;
+        // logined=false;
     //    }else{
-        logined=true;
+    //     logined=true;
     //    }
 
-       if(logined==false){
-            login_err="用户名或密码错误";
-            app.update();
-       }
-        
-        if(logined==true){
-            handler.open_url_page();
-            httpRequest(qingdaourl+"rolefunction/getauthoritymenus",#post,{categoryID: "323232", orderByField: "sequenceNo"},function(data){
-                //获取投屏数据
-                 get_touping();
-                if(data.error){
-                    handleAbError(data.error);
-                //    stdout.println(data.error);
-                    return;
-                }
-                var t=JSON.stringify(data);
-                // stdout.println("get menus:" +t);
-                var res=JSON.parse(t).data;
-                page_obj=res;
-                menu_json=res;
-                
-                var name=menu_json[0].page;
-                if(name=="mine"){
-                    menu_page=2;
-                }else if(name=="remote"){
-                    menu_page=0;
-                }else if(name=="projection"){
-                    menu_page=1;
-                }else if(name==""){
-                    menu_page=3;
-                }else if(name=="screenshot"){
-                    menu_page=4;
-                }else if(name=="upload"){
-                    menu_page=5;
-                }
-
-                logined=true;
-                last_id=0;
-                handler.webpage_request(qingdao_token);
-                app.update();
-                
-
-                // var n=0;
-                // for(var k in res ){
-                //     if(k.title=="应用"){
-                //         for (var i in k.children){
-                //             page_name.push(i.title);
-                //             page_num.push(n);
-                //             create_url_page(n,i.page);
-                //             n++;
-                //         }
-                //         continue;
-                //     }
-                //     page_name.push(k.title);
-                //     page_num.push(n);
-                //     n++;
-                    
-                // }
-                
-                
-                // stdout.println(page_name);
-                //  if(page_name[0]=="我的"){
-                //     view.windowTopmost=false;
-                //     menu_page=2;
-                // }else if(page_name[0]=="远程控制"){
-                //     view.windowTopmost=false;
-                //     menu_page=0;
-                // }else if(page_name[0]=="投屏"){
-                //     view.windowTopmost=false;
-                //     menu_page=1;
-                // }else{
-                //     view.windowTopmost=true;
-                //     menu_page=3;
-                //     visible_true_page(0);
-                // }
-                // last_id=0;
-                // app.update();
-
-
-            },function(err,status){}, "token: "+qingdao_token);
-
+    //    if(logined==false){
+    //         login_err="用户名或密码错误";
+    //         app.update();
+    //    }
         
 
-    
-        }
 
 
         // var config = Stream.openFile(self.url("index.json"));
@@ -1141,6 +1128,7 @@ var mine_svg=<svg #button-menu t="1662349104577"  viewBox="0 0 1024 1024" versio
 var upload_svg=<svg #button-menu t="1663513015342" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2577" width="200" height="200"><path d="M827.5 649.3l23.1 23.1h-242c-17.7 0-32 14.4-32 32.1s14.3 32.1 32 32.1h242l-23.1 23.1c-12.5 12.5-12.5 32.8 0 45.4 6.3 6.3 14.5 9.4 22.7 9.4s16.4-3.1 22.7-9.4l77.8-77.9c0.4-0.4 0.7-0.8 1.1-1.2 0.1-0.2 0.3-0.3 0.4-0.5 0.2-0.2 0.4-0.4 0.6-0.7 0.2-0.2 0.4-0.5 0.6-0.7 0.1-0.2 0.3-0.3 0.4-0.5 0.2-0.3 0.4-0.5 0.6-0.8 0.1-0.2 0.2-0.3 0.3-0.5 0.2-0.3 0.4-0.6 0.5-0.9 0.1-0.2 0.2-0.3 0.3-0.5 0.2-0.3 0.3-0.6 0.5-0.9 0.1-0.2 0.2-0.3 0.3-0.5 0.1-0.3 0.3-0.5 0.4-0.8l0.3-0.6c0.1-0.2 0.2-0.5 0.3-0.8 0.1-0.2 0.2-0.5 0.3-0.7 0.1-0.2 0.2-0.4 0.3-0.7 0.1-0.3 0.2-0.5 0.3-0.8 0.1-0.2 0.1-0.4 0.2-0.6l0.3-0.9c0.1-0.2 0.1-0.3 0.1-0.5 0.1-0.3 0.2-0.7 0.3-1 0-0.2 0.1-0.3 0.1-0.5 0.1-0.3 0.2-0.7 0.2-1 0-0.2 0.1-0.3 0.1-0.5 0.1-0.3 0.1-0.7 0.2-1 0-0.2 0-0.4 0.1-0.6 0-0.3 0.1-0.6 0.1-1 0-0.3 0-0.5 0.1-0.8 0-0.3 0-0.5 0.1-0.8v-1.4-0.2-0.2-1.4c0-0.3 0-0.5-0.1-0.8 0-0.3 0-0.5-0.1-0.8 0-0.3-0.1-0.7-0.1-1 0-0.2 0-0.4-0.1-0.6-0.1-0.3-0.1-0.7-0.2-1 0-0.2-0.1-0.3-0.1-0.5-0.1-0.3-0.1-0.7-0.2-1 0-0.2-0.1-0.3-0.1-0.5-0.1-0.3-0.2-0.7-0.3-1 0-0.2-0.1-0.3-0.1-0.5l-0.3-0.9c-0.1-0.2-0.1-0.4-0.2-0.6-0.1-0.3-0.2-0.5-0.3-0.8-0.1-0.2-0.2-0.5-0.3-0.7-0.1-0.2-0.2-0.5-0.3-0.7-0.1-0.3-0.2-0.5-0.3-0.8l-0.3-0.6c-0.1-0.3-0.3-0.5-0.4-0.8-0.1-0.2-0.2-0.3-0.3-0.5-0.2-0.3-0.3-0.6-0.5-0.9-0.1-0.2-0.2-0.3-0.3-0.5-0.2-0.3-0.4-0.6-0.5-0.9-0.1-0.2-0.2-0.3-0.3-0.5-0.2-0.3-0.4-0.5-0.6-0.8-0.1-0.2-0.3-0.3-0.4-0.5-0.2-0.2-0.4-0.5-0.6-0.7-0.2-0.2-0.4-0.4-0.6-0.7-0.1-0.2-0.3-0.3-0.4-0.5-0.4-0.4-0.7-0.8-1.1-1.2L872.8 604c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3zM641.5 287.5c0-17.7-14.3-32.1-32-32.1H225.8c-17.7 0-32 14.4-32 32.1 0 17.7 14.3 32.1 32 32.1h383.8c17.6-0.1 31.9-14.4 31.9-32.1zM641.5 479.9c0-17.7-14.3-32.1-32-32.1H225.8c-17.7 0-32 14.4-32 32.1 0 17.7 14.3 32.1 32 32.1h383.8c17.6 0 31.9-14.4 31.9-32.1zM225.8 640.3c-17.7 0-32 14.4-32 32.1 0 17.7 14.3 32.1 32 32.1h191.9c17.7 0 32-14.4 32-32.1 0-17.7-14.3-32.1-32-32.1H225.8z" p-id="2578" fill="#ffffff"></path><path d="M607.9 864.8H159.8c-17.6 0-31.9-14.4-31.9-32.1V191.2c0-17.7 14.3-32.1 31.9-32.1H674c17.6 0 31.9 14.4 31.9 32.1V512c0 17.7 14.3 32.1 31.9 32.1 17.6 0 31.9-14.4 31.9-32.1V159.2c0-35.4-28.6-64.2-63.9-64.2h-578C92.6 95 64 123.7 64 159.2v705.7c0 35.4 28.6 64.2 63.9 64.2h480c17.6 0 31.9-14.4 31.9-32.1 0.1-17.8-14.2-32.2-31.9-32.2z" p-id="2579" fill="#ffffff"></path><path d="M512.2 800c0 17.7 14.3 32.1 32 32.1h64.1c17.7 0 32-14.4 32-32.1 0-17.7-14.3-32.1-32-32.1h-64.1c-17.7 0.1-32 14.4-32 32.1z" p-id="2580" fill="#ffffff"></path></svg>;
 class MenuArea:Reactor.Component{
     function render(){
+       
        var me=this;
 
        var rows=menu_json.map(function(row,index){
@@ -1266,26 +1254,33 @@ class Screenshot: Reactor.Component {
 
 var file_path="";
 var file_time=2000;
+var file_real_time=0;
 var file_id="";
 var file_type="";
 var file_send_begin=false;
 //TODO: upload file
 class UploadFile: Reactor.Component {
     function render(){
+        var state_send;
+        if(file_send_begin){
+            state_send="停止";
+        }else{
+            state_send="开始";
+        }
         if(file_send_begin){
             return
                 <div style="margin:20px 20px;">
                     <div style="flow:horizontal;margin-bottom:20px;">
                         <div>选择文件: </div>
-                        <input #choose-file placeholder="文件名"></input>
+                        <input #choose-file placeholder="文件名">{file_path}</input>
                     </div>
                     <div style="flow:horizontal;margin-bottom:20px;">
                         <div>文件类型: </div>
-                        <input #file-type placeholder=""></input>
+                        <input #file-type placeholder="">{file_type}</input>
                     </div>
                     <div style="flow:horizontal;margin-bottom:20px;">
                         <div>上传频率: 每隔</div>
-                        <input type="number" #file-time style="height:30px;width:200px"></input>
+                        <input type="number" #file-time style="height:30px;width:200px">{file_real_time}</input>
                         <div>分钟</div>
                     </div>
                     <button #upload-file>停止</button>
@@ -1295,15 +1290,15 @@ class UploadFile: Reactor.Component {
                 <div style="margin:20px 20px;">
                     <div style="flow:horizontal;margin-bottom:20px;">
                         <div>选择文件: </div>
-                        <input #choose-file placeholder="文件名"></input>
+                        <input #choose-file placeholder="文件名">{file_path}</input>
                     </div>
                     <div style="flow:horizontal;margin-bottom:20px;">
                         <div>文件类型: </div>
-                        <input #file-type placeholder=""></input>
+                        <input #file-type placeholder="">{file_type}</input>
                     </div>
                     <div style="flow:horizontal;margin-bottom:20px;">
                         <div>上传频率: 每隔</div>
-                        <input type="number" #file-time style="height:30px;width:200px"></input>
+                        <input type="number" #file-time style="height:30px;width:200px">{file_real_time}</input>
                         <div>分钟</div>
                     </div>
                     <button #upload-file>开始</button>
@@ -1336,6 +1331,7 @@ class UploadFile: Reactor.Component {
             file_type=$(input#file-type).value;
             var time=$(input#file-time).value;
             file_time=time*1000*60;
+            file_real_time=time;
 
             // stdout.println(file_path);
 

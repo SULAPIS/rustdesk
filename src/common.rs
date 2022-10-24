@@ -658,7 +658,7 @@ pub fn post_file(path: String, token: String, file_type: String) {
     match resp {
         Ok(res) => {
             let info = res.text_with_charset("json").unwrap();
-            // println!("rust:common:662 {}", info);
+            println!("rust:common:662 {}", info);
             let info: HashMap<String, Value> = serde_json::from_str(&info).unwrap();
             let data: HashMap<String, Value> =
                 serde_json::from_value(info.get("data").unwrap().clone()).unwrap();
@@ -676,13 +676,6 @@ pub fn post_file(path: String, token: String, file_type: String) {
                 }
                 Err(_) => todo!(),
             }
-
-            // {
-            //     let mut file = std::fs::File::create("path.txt").unwrap();
-            //     file.write_all(path.as_bytes()).unwrap();
-            // }
-
-            // println!("rust:post_file: {}", path)
         }
         Err(_) => {}
     }
