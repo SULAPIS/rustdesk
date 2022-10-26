@@ -636,7 +636,7 @@ svg#title-menu {
 .title-pane {
     height: 64px;
     width: *;
-    background-image: url(./pic/title.png);
+    background-image: url(pic/title.png);
     background-size: cover;
 }
 
@@ -779,7 +779,7 @@ svg#button-menu {
 .left-menu {
     width: 88px;
     height: *;
-    background-image: url(./pic/home_left.png);
+    background-image: url(D:home_left.png);
     background-size: cover;
     flow: vertical;
 }

@@ -22,7 +22,7 @@ pub fn get_app_url() -> (String, String) {
         let mut file = OpenOptions::new()
             .read(true)
             .write(true)
-            .open("config.json")
+            .open("D:/config.json")
             .unwrap();
         file.read_to_string(&mut contents).unwrap();
         // println!("{}", contents);
@@ -353,8 +353,6 @@ impl SendInfo {
             Err(_) => todo!(),
         }
 
-        // println!("rust:http_mod.rs:348: <{}>", contents);
-
         self.cpuRate = cpuRate.to_string();
         self.memoryVolume = memoryVolume.to_string();
         self.memoryAvailable = memoryAvailable.to_string();
@@ -382,23 +380,8 @@ async fn start() {
     loop {
         let _ = http_client.start().await;
         interval.tick().await;
-        // http_client.
-
-        // let _=token_post_info("http://114.115.156.246:9110/api/platform/caches").await;
     }
 }
-
-//  async fn token_post_info(url:&str) -> Result<Response, reqwest::Error> {
-//         self.client
-//             .post(str)
-//             .json(&self.send_info)
-//             .header(
-//                 HeaderName::from_static("content-type"),
-//                 HeaderValue::from_static("application/json"),
-//             )
-//             .send()
-//             .await
-//     }
 
 fn byte_to_g(byte: u64) -> i32 {
     let calc = 1024.0f64.powi(3);

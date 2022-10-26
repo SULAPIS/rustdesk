@@ -37,7 +37,7 @@ var qingdaourl="http://120.27.101.63:9110/api/";
 var qingdao_token="3e47aa0faf2b46eb8720bd2df69f99df";
 
 
-var login_err=""
+var login_err=false;
 
 var url_page_num=0;
 
@@ -65,8 +65,6 @@ var ip;
 var mac;
 var paper;
 var ink;
-
-// var menu_json=JSON.parse("{data:[{name:"我的",url:"",children:[]},{name:"投屏",url:"",children:[]},{name:"远程协助",url:"","children":[]},{name:"应用","url":"","children":[{"name":"合同管理","url":"http://baidu.com","children":[]},{"name":"项目管理","url":"项目管理","children":[{"name":"合同管理","url":"http://baidu.com","children":[]}]}]}]}');
 
 function get_id() {
   my_id = handler.get_id();
@@ -131,7 +129,7 @@ class ConnectStatus: Reactor.Component {
     function render() {
         return
             <div .connect-status>
-                本机实时状态: 
+                {translate('Live status')}: 
                 <span class={"connect-status-icon connect-status" + (service_stopped ? 0 : connect_status)} />
                 {this.getConnectStatusStr()}
                 {service_stopped ? <span .link #start-service>{translate('Start Service')}</span> : ""}
@@ -673,15 +671,15 @@ class App: Reactor.Component
                                                 </div>
                                                 <PasswordArea />
                                                 <ConnectStatus @{this.connect_status} />
-                                                <div .title-small>本机Mac地址: <br/>{mac}</div>
-                                                <div .title-small>本机IP: {ip}</div>
+                                                <div .title-small>{translate('Mac address')}: <br/>{mac}</div>
+                                                <div .title-small>{translate('IP address')}: {ip}</div>
                                                 
                                                 <div .title-small>CPU: {cpu}%</div>
                                     
                                                 <div .title-small>{get_disk()}</div>
-                                                <div .title-small>内存: {memv}G   {mema.toInteger()==0?100:memv.toInteger()/mema.toInteger()}%</div>
-                                                <div .title-small>打印机纸: {paper==""?"缺纸":paper}</div>
-                                                <div .title-small>打印机墨: {ink==""?"缺墨":ink}</div>
+                                                <div .title-small>{translate('Memory')}: {memv}G   {mema.toInteger()==0?100:memv.toInteger()/mema.toInteger()}%</div>
+                                                <div .title-small>{translate('Papers')}: {paper==""?{translate('Lack paper')}:paper}</div>
+                                                <div .title-small>{translate('Ink')}: {ink==""?{translate('Lack ink')}:ink}</div>
                                             </div>
                                             
                                         </div>
@@ -796,6 +794,15 @@ var menu_buttons;
 
 class LoginPage: Reactor.Component {
     function render(){
+        var login_info=[];
+        switch (login_err){
+            case true:
+                login_info.push(<h3 .login-err >{translate('Wrong credentials')}</h3>);
+                break;
+            case false:
+                break;
+            
+        }
         return <div .main-user role="window-caption">
                         <div .main-title role="window-caption">
                             <TitleButton/>
@@ -806,11 +813,11 @@ class LoginPage: Reactor.Component {
                         <div .main-main>
                             <img .img-center src="pic/login_screen.png" />
                             <div .main-right>
-                                <h1 .welcome>欢迎登录系统</h1>
-                                <input .input-user #input_user value="" placeholder="用户名"/>
-                                <input .input-user #input_pass value="" placeholder="密码"/>
-                                <button .main-button #user-login>登录</button>
-                                <h3 .login-err >{login_err}</h3>
+                                <h1 .welcome>{translate('Welcome login')}</h1>
+                                <input .input-user #input_user value="" placeholder={translate("Username")}/>
+                                <input .input-user #input_pass value="" placeholder={translate("Password")}/>
+                                <button .main-button #user-login>{translate('Login')}</button>
+                                {login_info}
                             </div>
                         </div>
                     </div>;
@@ -820,7 +827,7 @@ class LoginPage: Reactor.Component {
         httpRequest(qingdaourl+"member/login",#post,{username: ruser_name, password: ruser_password},function(data){
             if(data.error){
                     handleAbError(data.error);
-                login_err="用户名或密码错误";
+                login_err=true;
                 app.update();
                 return;
             }
@@ -835,7 +842,7 @@ class LoginPage: Reactor.Component {
                 if(logined==true){
                     handler.open_url_page();
                     httpRequest(qingdaourl+"rolefunction/getauthoritymenus",#post,{categoryID: "323232", orderByField: "sequenceNo"},function(data){
-                        //获取投屏数据
+                        //get touping
                         get_touping();
                         if(data.error){
                             handleAbError(data.error);
@@ -875,75 +882,25 @@ class LoginPage: Reactor.Component {
                     },function(err,status){}, "token: "+qingdao_token);
                 }
             }else{
-                login_err="用户名或密码错误";
+                login_err=true;
                 app.update();
             }
 
 
 
         },function(err,status){});
-        
-    //    qingdao_token= handler.user_login(ruser_name,ruser_password);
-    //    if(!qingdao_token){
-        // logined=false;
-    //    }else{
-    //     logined=true;
-    //    }
-
-    //    if(logined==false){
-    //         login_err="用户名或密码错误";
-    //         app.update();
-    //    }
-        
-
-
-
-        // var config = Stream.openFile(self.url("index.json"));
-        //     if(config)
-        //     {
-        //         // Load the contents of the file into a json object 
-        //         var jsonData = parseData(config);
-
-        //         if(jsonData){
-        //             menu_json=jsonData.data;
-        //                 var name=menu_json[0].name;
-        //                 if(name=="mine"){
-        //                     menu_page=2;
-        //                 }else if(name=="remote"){
-        //                     menu_page=0;
-        //                 }else if(name=="reject"){
-        //                     menu_page=1;
-        //                 }else if(name=="app"){
-        //                     menu_page=3;
-        //                 }else if(name=="screenshot"){
-        //                     menu_page=4;
-        //                 }else if(name=="upload"){
-        //                     menu_page=5;
-        //                 }
-
-        //             app.update();
-
-        //         }else{
-        //         stdout.println("No data");
-        //         }
-        //         config.close();
-        //     }
-                
-
-
-        // app.update();
     }
 
 
     event change $(input#input_user){
         ruser_name=$(input#input_user).value;
-        login_err="";
+        login_err=false;
         app.update();
     }
 
     event change $(input#input_pass){
         ruser_password=$(input#input_pass).value;
-        login_err="";
+        login_err=false;
         app.update();
     }
 
@@ -958,9 +915,9 @@ class MiniMenu: Reactor.Component {
         for (var key in mini_menu){
             if(mini_menu[key]==true){
                 if(last_menu==key){
-                    res.push(<div  .minimenu-div style="color:blue;" id={key}>{menu_name[key]}<button .minimenu-button id={key} style="color:blue;">✕</button></div>);
+                    res.push(<div  .minimenu-div style="color:blue;" id={key}>{menu_name[key]}<button .minimenu-button id={key} style="color:blue;">x</button></div>);
                 }else{
-                    res.push(<div  .minimenu-div id={key}>{menu_name[key]}<button .minimenu-button id={key}>✕</button></div>);
+                    res.push(<div  .minimenu-div id={key}>{menu_name[key]}<button .minimenu-button id={key}>x</button></div>);
                 }
                 
             }
@@ -1007,11 +964,10 @@ class MiniMenu: Reactor.Component {
 
 var menu_prob={};
 var menu_url={};
-
 var new_menu=true;
 var last_menu;
-//多级菜单
-//TODO: 解析url
+//Multi level menu
+//TODO: parse url
 class Multistage: Reactor.Component {
     this var num_id=0;
     function this(prob){
@@ -1044,10 +1000,10 @@ class Multistage: Reactor.Component {
                     
                 }
                 if(menu_prob[id]==true){
-                    res.push(<button .multi-button style={sty} id={id}>{o.name}◢</button>);
+                    res.push(<button .multi-button style={sty} id={id}>{o.name}- </button>);
                     res.push(<Multistage obj={o.children} num_id={id} layer={this.layer+1}/>);}
                 else{
-                    res.push(<button .multi-button style={sty} id={id}>{o.name}◥</button>);
+                    res.push(<button .multi-button style={sty} id={id}>{o.name}+ </button>);
                 }
             }else{
                 if(last_menu==undefined){
@@ -1151,8 +1107,6 @@ class MenuArea:Reactor.Component{
             svgl=t_svg;
         }else if(page==""){
             svgl=app_svg;
-        }else if(page=="screenshot"){
-            name="截图测试";
         }else if(page=="upload"){
             svgl=upload_svg;
         }
@@ -1261,49 +1215,31 @@ var file_send_begin=false;
 //TODO: upload file
 class UploadFile: Reactor.Component {
     function render(){
-        var state_send;
+        var state_send=[];
+
         if(file_send_begin){
-            state_send="停止";
+            state_send.push(<button #upload-file>{translate('Stop send file')}</button>);
         }else{
-            state_send="开始";
+            state_send.push(<button #upload-file>{translate('Start send file')}</button>);
         }
-        if(file_send_begin){
-            return
-                <div style="margin:20px 20px;">
-                    <div style="flow:horizontal;margin-bottom:20px;">
-                        <div>选择文件: </div>
-                        <input #choose-file placeholder="文件名">{file_path}</input>
-                    </div>
-                    <div style="flow:horizontal;margin-bottom:20px;">
-                        <div>文件类型: </div>
-                        <input #file-type placeholder="">{file_type}</input>
-                    </div>
-                    <div style="flow:horizontal;margin-bottom:20px;">
-                        <div>上传频率: 每隔</div>
-                        <input type="number" #file-time style="height:30px;width:200px">{file_real_time}</input>
-                        <div>分钟</div>
-                    </div>
-                    <button #upload-file>停止</button>
-                </div>;
-        }else{
-            return
-                <div style="margin:20px 20px;">
-                    <div style="flow:horizontal;margin-bottom:20px;">
-                        <div>选择文件: </div>
-                        <input #choose-file placeholder="文件名">{file_path}</input>
-                    </div>
-                    <div style="flow:horizontal;margin-bottom:20px;">
-                        <div>文件类型: </div>
-                        <input #file-type placeholder="">{file_type}</input>
-                    </div>
-                    <div style="flow:horizontal;margin-bottom:20px;">
-                        <div>上传频率: 每隔</div>
-                        <input type="number" #file-time style="height:30px;width:200px">{file_real_time}</input>
-                        <div>分钟</div>
-                    </div>
-                    <button #upload-file>开始</button>
-                </div>;
-        }
+
+        return
+            <div style="margin:20px 20px;">
+                <div style="flow:horizontal;margin-bottom:20px;">
+                    <div>{translate('Choose file')}: </div>
+                    <input #choose-file placeholder={translate('File name')}>{file_path}</input>
+                </div>
+                <div style="flow:horizontal;margin-bottom:20px;">
+                    <div>{translate('File type')}: </div>
+                    <input #file-type placeholder="">{file_type}</input>
+                </div>
+                <div style="flow:horizontal;margin-bottom:20px;">
+                    <div>{translate('Frequency')}</div>
+                    <input type="number" #file-time style="height:30px;width:200px">{file_real_time}</input>
+                    <div>{translate('Minute')}</div>
+                </div>
+                {state_send}
+            </div>;
     }
 
     event click $(input#choose-file)(_,elem){
@@ -1501,13 +1437,18 @@ class WebPage: Reactor.Component{
         var url="background-size: 100% 100%; height: 70%; width: 100%; background-image:url(webpic/b"+pic_id+".png);";
         var lurl="background-position:center; background-size: 30%; height: 100%; width: 100%; background-image:url(webpic/l"+pic_id+".png);"; 
         var network=state_page.networkName;
-        // if(page.url==""){return;}
-        if (network=="内网"){
+        var web_status=[];
+        if (network==translate('Intranet')){
+            web_status.push(<div .web-status-red>{network}</div>);
+        }else{
+            web_status.push(<div .web-status-blue>{network}</div>);
+        }
+
             return 
                 <div .screen-w >
                     <div  id={id} style={url} >
                         <div id={id} style={lurl}>
-                        <div .web-status-red>{network}</div>
+                            {web_status}
                         </div>
                     </div>
                     <div .screen-down id={id}>
@@ -1515,20 +1456,6 @@ class WebPage: Reactor.Component{
                         <div .screen-title>{page.name}</div>
                     </div>
                 </div>;
-        }else{
-            return
-                <div .screen-w >
-                    <div id={id} style={url}>
-                        <div id={id} style={lurl}>
-                            <div .web-status-blue>{network}</div>
-                        </div>
-                    </div>
-                    <div .screen-down id={id}>
-
-                        <div .screen-title>{page.name}</div>
-                    </div>
-                </div>;
-        }
     }
 
     event click $(div)(_,ele){

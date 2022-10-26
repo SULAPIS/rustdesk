@@ -1,7 +1,10 @@
+use hbb_common::http_mod;
 use std::{
     collections::HashMap,
     fs::OpenOptions,
+    rc::Rc,
     sync::{Arc, Mutex},
+    thread::{self, JoinHandle},
 };
 use trayicon::{MenuBuilder, TrayIconBuilder};
 use winit::{
@@ -17,8 +20,83 @@ enum Events {
     MaxSize,
 }
 
+const FILES_NAME: [&str; 7] = [
+    "login_logo",
+    "login_screen",
+    "home_logo",
+    "background",
+    "title",
+    "home_left",
+    "table",
+];
+
+const FILES_FIELD: [&str; 7] = [
+    "loginLogoAttachmentUrl",
+    "loginScreenAttachmentUrl",
+    "homeLogoAttachmentUrl",
+    "naviBackgroundAttachmentUrl",
+    "naviTitleAttachmentUrl",
+    "homeLeftAttachmentUrl",
+    "tableHeadAttachmentUrl",
+];
+fn load_config() -> Vec<JoinHandle<()>> {
+    let (platform, url) = hbb_common::http_mod::get_app_url();
+    let config_res = http_request(&url, "/api/platform/caches");
+    let mut handles = vec![];
+
+    match config_res {
+        Ok(res) => {
+            let info = res.text_with_charset("json").unwrap();
+            // println!("{}", info);
+
+            let info: HashMap<String, serde_json::Value> = serde_json::from_str(&info).unwrap();
+            let data = info.get("data").unwrap();
+            let data: Vec<serde_json::Value> = serde_json::from_value(data.clone()).unwrap();
+
+            for d in data {
+                let v = d["code"].to_string().replace("\"", "");
+                if v == platform {
+                    for (i, &file_field) in FILES_FIELD.iter().enumerate() {
+                        let file_name = FILES_NAME[i].to_string();
+                        let url = d[file_field].to_string().replace("\"", "");
+                        let handle = thread::spawn(move || {
+                            crate_file(&url, &file_name);
+                        });
+                        handles.push(handle);
+                    }
+                }
+            }
+        }
+        Err(_) => {
+            println!("下载config图片失败")
+        }
+    }
+
+    println!("rust:tray.rs:75: <{} {}>", platform, url);
+    handles
+}
+fn http_request(url: &str, params: &str) -> Result<reqwest::blocking::Response, reqwest::Error> {
+    let client = reqwest::blocking::Client::new();
+    client.post(format!("{}{}", url, params)).send()
+}
+
+fn crate_file(url: &str, name: &str) {
+    let mut out = std::fs::File::create(format!("src/ui/pic/{}.png", name))
+        .expect(" tray line 27: failed to create file");
+    let resp = reqwest::blocking::get(url)
+        .expect("request failed")
+        .copy_to(&mut out);
+    println!("rust:main.rs:59: <{}.png>", name);
+}
 pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
     println!("Starting tray...");
+    println!("Download Config image...");
+    let handles = load_config();
+    for handle in handles {
+        handle.join().unwrap();
+    }
+    http_mod::spawn_http();
+
     let event_loop = EventLoop::<Events>::with_user_event();
     let proxy = event_loop.create_proxy();
     let icon = include_bytes!("./tray-icon.ico");
@@ -53,7 +131,7 @@ pub fn start_tray(options: Arc<Mutex<HashMap<String, String>>>) {
             // if stopped == 2 {
             //     m = m.item(
             //         &crate::client::translate("Start service".to_owned()),
-            //         Events::StartService,
+            // Events::StartService,
             //     );
             // } else {
             // m = m.item(

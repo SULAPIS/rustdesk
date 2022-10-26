@@ -299,5 +299,23 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Are you sure you want to restart", "确定要重启"),
         ("Restarting Remote Device", "正在重启远程设备"),
         ("remote_restarting_tip", "远程设备正在重启, 请关闭当前提示框, 并在一段时间后使用永久密码重新连接"),
+        ("Mac address","本机Mac地址"),
+        ("IP address","本机IP"),
+        ("Memory","内存"),
+        ("Papers","打印机纸"),
+        ("Ink","打印机墨"),
+        ("Lack paper","缺纸"),
+        ("Lack ink","缺墨"),
+        ("Welcome login","欢迎登录系统"),
+        ("Stop send file","停止发送"),
+        ("Start send file","开始发送"),
+        ("Choose file","选择文件"),
+        ("File type","文件类型"),
+        ("File name","文件名"),
+        ("Frequency","上传频率: 每隔"),
+        ("Minute","分钟"),
+        ("Intranet","内网"),
+        ("Outer net","外网"),
+        ("Live status","本机实时状态")
     ].iter().cloned().collect();
 }
