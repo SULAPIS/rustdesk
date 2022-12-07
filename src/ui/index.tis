@@ -54,7 +54,7 @@ var svg_menu = <svg #menu viewBox="0 0 512 512">
 </svg>;
 var svg_refresh_password = <svg #refresh-password xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38"/></svg>;
 var my_id = "";
-var menu_page=0;
+var menu_page=5;
 
 var cpu;
 var memv;
@@ -872,7 +872,7 @@ class LoginPage: Reactor.Component {
                                 menu_page=5;
                                 break;
                             default:
-                                menu_page=0;
+                                menu_page=5;
                         }
                         logined=true;
                         last_id=0;
@@ -1235,7 +1235,7 @@ class UploadFile: Reactor.Component {
                 </div>
                 <div style="flow:horizontal;margin-bottom:20px;">
                     <div>{translate('Frequency')}</div>
-                    <input type="number" #file-time style="height:30px;width:200px">{file_real_time}</input>
+                    <input type="number" #file-time style="height:30px;width:200px" value={file_real_time}></input>
                     <div>{translate('Minute')}</div>
                 </div>
                 {state_send}
@@ -1245,6 +1245,7 @@ class UploadFile: Reactor.Component {
     event click $(input#choose-file)(_,elem){
         var file = view.selectFile(#open,filter);
         var filep=file.replace(/^file:\/\//,"");
+        filep=handler.url_decode(filep);
         elem.value=filep;
         
         

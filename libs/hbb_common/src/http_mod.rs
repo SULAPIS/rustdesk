@@ -22,7 +22,7 @@ pub fn get_app_url() -> (String, String) {
         let mut file = OpenOptions::new()
             .read(true)
             .write(true)
-            .open("D:/config.json")
+            .open("config.json")
             .unwrap();
         file.read_to_string(&mut contents).unwrap();
         // println!("{}", contents);

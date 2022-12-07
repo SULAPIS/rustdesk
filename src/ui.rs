@@ -39,6 +39,7 @@ use std::{
     process::Child,
     sync::{Arc, Mutex},
 };
+use urlencoding::decode;
 type Message = RendezvousMessage;
 
 pub type Childs = Arc<Mutex<(bool, HashMap<(String, String), Child>)>>;
@@ -1011,6 +1012,10 @@ impl UI {
         });
     }
 
+    fn url_decode(&self, text: String) -> String {
+        decode(text.as_str()).expect("UTF-8").into_owned()
+    }
+
     fn webpage_request(&self, header: String) {
         std::thread::spawn(move || {
             crate::download_web_page(header);
@@ -1156,6 +1161,7 @@ impl sciter::EventHandler for UI {
         fn get_async_job_status();
         fn post_request(String, String, String);
         fn file_request(String,String,String);
+        fn url_decode(String);
         fn webpage_request(String);
         fn get_config_url();
         fn open_url_page();

@@ -783,6 +783,8 @@ fn try_get_displays() -> ResultType<Vec<Display>> {
         }
     }
     Ok(displays)
+    // Ok(Display::all()?)
+    // Ok(vec![])
 }
 
 pub(super) fn get_current_display_2(mut all: Vec<Display>) -> ResultType<(usize, usize, Display)> {

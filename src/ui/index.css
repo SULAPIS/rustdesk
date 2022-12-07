@@ -47,6 +47,7 @@ body {
     border-radius: 5px;
 
 
+
 }
 
 
@@ -779,7 +780,7 @@ svg#button-menu {
 .left-menu {
     width: 88px;
     height: *;
-    background-image: url(D:home_left.png);
+    background-image: url(pic/home_left.png);
     background-size: cover;
     flow: vertical;
 }
